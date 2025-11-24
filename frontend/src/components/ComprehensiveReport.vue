@@ -227,10 +227,10 @@
 
 <script setup lang="ts">
 // Comprehensive Report Component - Re-saved to fix dynamic import issues
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted } from 'vue';
 import MaterialIcon from './icons/MaterialIcon.vue';
-import RadarChart from './RadarChart.vue';
-import ComplexRadarChart from './ComplexRadarChart.vue';
+// import RadarChart from './RadarChart.vue';
+// import ComplexRadarChart from './ComplexRadarChart.vue';
 import DoubleLayerRadarChart from './DoubleLayerRadarChart.vue';
 import LeadershipCircleProfile from './LeadershipCircleProfile.vue'; // Import LCP
 
@@ -360,19 +360,19 @@ const getRoleTextForProfile = (): string => {
   return '基层管理者';
 };
 
-const getRoleSpecificTitle = (): string => {
-  if (!report.value) return '角色专属能力';
+// const getRoleSpecificTitle = (): string => {
+//   if (!report.value) return '角色专属能力';
   
-  const role = report.value.userInfo.userRole.toLowerCase();
-  if (role.includes('高层') || role.includes('总经理-1')) {
-    return '高层领导力';
-  } else if (role.includes('中层') || role.includes('总经理-2')) {
-    return '中层管理力';
-  } else if (role.includes('基层') || role.includes('一线')) {
-    return '基层管理力';
-  }
-  return '角色专属能力';
-};
+//   const role = report.value.userInfo.userRole.toLowerCase();
+//   if (role.includes('高层') || role.includes('总经理-1')) {
+//     return '高层领导力';
+//   } else if (role.includes('中层') || role.includes('总经理-2')) {
+//     return '中层管理力';
+//   } else if (role.includes('基层') || role.includes('一线')) {
+//     return '基层管理力';
+//   }
+//   return '角色专属能力';
+// };
 
 const getPriorityText = (priority: string): string => {
   const texts = {
@@ -433,33 +433,37 @@ const loadReport = async () => {
 };
 
 // 其他功能方法
-const generatePDF = async () => {
-  try {
-    if (!report.value) {
-      alert('没有报告数据可以导出');
-      return;
-    }
+// const generatePDF = async () => {
+//   try {
+//     if (!report.value) {
+//       alert('没有报告数据可以导出');
+//       return;
+//     }
 
-    // 1. 获取雷达图图片
-    let chartImage = '';
-    // 优先尝试获取 LCP 图表
-    if (lcpChartRef.value) {
-      // @ts-ignore
-      chartImage = await lcpChartRef.value.getChartImage?.() || '';
-    } 
-    // 降级到旧版雷达图
-    else if (mainRadarChart.value) {
-      // @ts-ignore
-      chartImage = mainRadarChart.value.getChartImage?.() || '';
-    }
-
-    // 调用后端生成PDF接口
-    // ... (existing logic)
-  } catch (error) {
-    console.error('PDF生成失败:', error);
-    alert('PDF生成失败，请重试');
-  }
-};
+//     // 1. 获取雷达图图片
+//     let chartImage = '';
+//     // 优先尝试获取 LCP 图表
+//     if (lcpChartRef.value) {
+//       // @ts-ignore
+//       chartImage = await lcpChartRef.value.getChartImage?.() || '';
+//     }
+//     // 降级到旧版雷达图
+//   } catch (e) {
+//     console.error('导出PDF失败', e);
+//   }
+// };
+//     else if (mainRadarChart.value) {
+//       // @ts-ignore
+//       chartImage = mainRadarChart.value.getChartImage?.() || '';
+//     }
+//
+//     // 调用后端生成PDF接口
+//     // ... (existing logic)
+//   } catch (error) {
+//     console.error('PDF生成失败:', error);
+//     alert('PDF生成失败，请重试');
+//   }
+// };
 
 const downloadPDF = async () => {
   try {

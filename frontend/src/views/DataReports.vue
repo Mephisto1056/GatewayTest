@@ -174,7 +174,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import MaterialIcon from '../components/icons/MaterialIcon.vue'
-import ComprehensiveReport from '../components/ComprehensiveReport.vue'
+// import ComprehensiveReport from '../components/ComprehensiveReport.vue'
 
 interface DimensionScore {
   name: string
@@ -340,20 +340,20 @@ const viewComprehensiveReport = async (report: Report) => {
   }
 }
 
-const closeComprehensiveModal = () => {
-  showComprehensiveModal.value = false
-  currentReportId.value = null
-}
+// const closeComprehensiveModal = () => {
+//   showComprehensiveModal.value = false
+//   currentReportId.value = null
+// }
 
 const downloadReport = (report: Report) => {
   // 实现下载报告功能
   alert(`下载 ${report.userName} 的评估报告（功能开发中）`)
 }
 
-const shareReport = (report: Report) => {
-  // 实现分享报告功能
-  alert(`分享 ${report.userName} 的评估报告（功能开发中）`)
-}
+// const shareReport = (report: Report) => {
+//   // 实现分享报告功能
+//   alert(`分享 ${report.userName} 的评估报告（功能开发中）`)
+// }
 
 const exportData = () => {
   // 实现数据导出功能
@@ -365,24 +365,24 @@ const generateSummaryReport = () => {
   alert('生成汇总报告功能开发中...')
 }
 
-const closeDetailModal = () => {
-  showDetailModal.value = false
-  currentReport.value = null
-}
+// const closeDetailModal = () => {
+//   showDetailModal.value = false
+//   currentReport.value = null
+// }
 
-const getStrengths = (report: Report) => {
-  // 获取优势领域（得分率>70%的维度）
-  return report.dimensionScores
-    .filter(d => d.percentage > 70)
-    .map(d => `${d.name}表现优秀，得分率达到${d.percentage.toFixed(1)}%`)
-}
+// const getStrengths = (report: Report) => {
+//   // 获取优势领域（得分率>70%的维度）
+//   return report.dimensionScores
+//     .filter(d => d.percentage > 70)
+//     .map(d => `${d.name}表现优秀，得分率达到${d.percentage.toFixed(1)}%`)
+// }
 
-const getImprovements = (report: Report) => {
-  // 获取改进建议（得分率<60%的维度）
-  return report.dimensionScores
-    .filter(d => d.percentage < 60)
-    .map(d => `建议加强${d.name}方面的能力提升，当前得分率为${d.percentage.toFixed(1)}%`)
-}
+// const getImprovements = (report: Report) => {
+//   // 获取改进建议（得分率<60%的维度）
+//   return report.dimensionScores
+//     .filter(d => d.percentage < 60)
+//     .map(d => `建议加强${d.name}方面的能力提升，当前得分率为${d.percentage.toFixed(1)}%`)
+// }
 
 onMounted(() => {
   loadReports()

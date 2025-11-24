@@ -267,20 +267,20 @@ const progressPercentage = computed(() => {
   return Math.round((completedQuestions.value / totalQuestions.value) * 100);
 });
 
-const missingFields = computed(() => {
-  const missing: string[] = [];
-  if (!relationship.value) missing.push('关系选择');
-  
-  if (questionnaire.value) {
-    [...questionnaire.value.selfdirected, ...questionnaire.value.roleSpecific].forEach((question, index) => {
-      if (!responses.value[question.questionCode]) {
-        missing.push(`第${index + 1}题`);
-      }
-    });
-  }
-  
-  return missing;
-});
+// const missingFields = computed(() => {
+//   const missing: string[] = [];
+//   if (!relationship.value) missing.push('关系选择');
+//
+//   if (questionnaire.value) {
+//     [...questionnaire.value.selfdirected, ...questionnaire.value.roleSpecific].forEach((question, index) => {
+//       if (!responses.value[question.questionCode]) {
+//         missing.push(`第${index + 1}题`);
+//       }
+//     });
+//   }
+//
+//   return missing;
+// });
 
 const isFormValid = computed(() => {
   if (!relationship.value) return false;
@@ -435,13 +435,13 @@ const submitQuestionnaire = async () => {
   }
 };
 
-const resetForm = () => {
-  responses.value = {};
-  relationship.value = '';
-  submitted.value = false;
-  evaluationResult.value = null;
-  loadQuestionnaire();
-};
+// const resetForm = () => {
+//   responses.value = {};
+//   relationship.value = '';
+//   submitted.value = false;
+//   evaluationResult.value = null;
+//   loadQuestionnaire();
+// };
 
 // 生命周期
 onMounted(() => {
