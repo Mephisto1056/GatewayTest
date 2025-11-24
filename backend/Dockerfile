@@ -22,6 +22,8 @@ WORKDIR /app
 
 # Install font dependencies for PDF generation (if needed by fontkit/pdfkit on alpine)
 # fontconfig is often useful for font discovery
+# Switch to Aliyun mirror for faster installation in China
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 RUN apk add --no-cache fontconfig
 
 # Copy built assets from builder
@@ -33,5 +35,5 @@ COPY --from=builder /app/fonts ./fonts
 # Expose port
 EXPOSE 3000
 
-# Start command (Run seed script before starting the app)
-CMD ["sh", "-c", "npm run seed:prod && npm run start:prod"]
+# Start command (Run seed and import scripts before starting the app)
+CMD ["sh", "-c", "npm run seed:prod && npm run import:prod && npm run start:prod"]
