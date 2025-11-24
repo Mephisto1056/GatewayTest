@@ -29,7 +29,7 @@
     ```bash
     docker-compose up -d --build
     ```
-    **注意**: 如果遇到 `permission denied` 错误，请尝试在命令前加上 `sudo`：
+    **注意**: 如果遇到 `permission denied` 错误，请尝试在命令前加上 `sudo`，或参考 [故障排除指南](故障排除指南.md#问题0docker-启动报错-permission-denied) 进行永久修复。
     ```bash
     sudo docker-compose up -d --build
     ```
