@@ -29,7 +29,10 @@
     ```bash
     docker-compose up -d --build
     ```
-    **注意**: 如果遇到 `permission denied` 错误，请尝试在命令前加上 `sudo`，或参考 [故障排除指南](故障排除指南.md#问题0docker-启动报错-permission-denied) 进行永久修复。
+    **注意**:
+    1. 如果遇到 `permission denied` 错误，请尝试在命令前加上 `sudo`，或参考 [故障排除指南](故障排除指南.md#问题0docker-启动报错-permission-denied) 进行永久修复。
+    2. 如果遇到 `failed to resolve source` 或其他网络下载错误，请参考 [故障排除指南](故障排除指南.md#问题01docker-拉取镜像失败--网络超时) 配置镜像源。
+
     ```bash
     sudo docker-compose up -d --build
     ```
