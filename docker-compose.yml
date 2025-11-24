@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # -------------------------------------------------------------------
+  # Database Service (PostgreSQL)
+  # -------------------------------------------------------------------
+  db:
+    image: postgres:14-alpine
+    container_name: gateway_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-liruoyu}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password} # 建议在生产环境使用更复杂的密码
+      POSTGRES_DB: ${DB_DATABASE:-gateway}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-liruoyu} -d ${DB_DATABASE:-gateway}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # -------------------------------------------------------------------
+  # Backend Service (NestJS)
+  # -------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gateway_backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: db # 使用服务名连接
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-liruoyu}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      DB_DATABASE: ${DB_DATABASE:-gateway}
+      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_key_change_in_prod}
+      # 邮件配置 (建议通过 .env 文件覆盖)
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM}
+      FRONTEND_URL: ${FRONTEND_URL:-http://101.132.237.40}
+    volumes:
+      - ./backend/output:/app/output # 挂载生成的报告目录
+    networks:
+      - app-network
+
+  # -------------------------------------------------------------------
+  # Frontend Service (Vue + Nginx)
+  # -------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gateway_frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80" # 对外暴露 80 端口
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

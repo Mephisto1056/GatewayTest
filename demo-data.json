@@ -1,0 +1,164 @@
+{
+  "description": "演示数据 - 用于测试问卷提交和评分计算",
+  "testCases": [
+    {
+      "name": "高层领导者自评测试",
+      "description": "测试高层领导者的自评问卷提交和评分计算",
+      "submissionData": {
+        "evaluationId": 1,
+        "respondentId": 1,
+        "relationship": "自评",
+        "responses": [
+          {"questionCode": "SD001", "score": 4, "description": "自主导向问题1 - 经常"},
+          {"questionCode": "SD002", "score": 3, "description": "自主导向问题2 - 有时"},
+          {"questionCode": "SD003", "score": 5, "description": "自主导向问题3 - 几乎总是"},
+          {"questionCode": "HL001", "score": 4, "description": "高层问题1 - 经常"},
+          {"questionCode": "HL002", "score": 2, "description": "高层问题2 - 很少 (可能是反向计分题)"},
+          {"questionCode": "HL003", "openText": "作为高层领导者，我致力于制定长远战略规划，并确保团队理解和执行公司愿景。在决策过程中，我会综合考虑各方面因素，包括市场趋势、团队能力和资源配置。"}
+        ]
+      },
+      "expectedCalculations": {
+        "basicScoring": "原始分数直接使用",
+        "reverseScoring": "如果HL002是反向计分题，则 6-2=4",
+        "relevanceCalculation": "如果HL001关联SD001，则最终得分 = 4*0.4 + 4*0.6 = 4.0"
+      }
+    },
+    {
+      "name": "360度评估测试",
+      "description": "测试高层领导者的360度评估",
+      "multipleResponses": [
+        {
+          "respondentId": 2,
+          "relationship": "上级",
+          "responses": [
+            {"questionCode": "SD001", "score": 4},
+            {"questionCode": "SD002", "score": 4},
+            {"questionCode": "HL001", "score": 5},
+            {"questionCode": "HL002", "score": 2}
+          ],
+          "expectedScore": 85
+        },
+        {
+          "respondentId": 3,
+          "relationship": "平级",
+          "responses": [
+            {"questionCode": "SD001", "score": 3},
+            {"questionCode": "SD002", "score": 4},
+            {"questionCode": "HL001", "score": 4},
+            {"questionCode": "HL002", "score": 3}
+          ],
+          "expectedScore": 80
+        },
+        {
+          "respondentId": 4,
+          "relationship": "下级",
+          "responses": [
+            {"questionCode": "SD001", "score": 5},
+            {"questionCode": "SD002", "score": 4},
+            {"questionCode": "HL001", "score": 5},
+            {"questionCode": "HL002", "score": 1}
+          ],
+          "expectedScore": 90
+        }
+      ],
+      "expected360Score": {
+        "calculation": "85*0.5 + 80*0.3 + 90*0.2 = 84.5",
+        "weights": {
+          "上级": "50%",
+          "平级": "30%",
+          "下级": "20%"
+        }
+      }
+    },
+    {
+      "name": "中层管理者测试",
+      "description": "测试中层管理者的问卷",
+      "submissionData": {
+        "evaluationId": 2,
+        "respondentId": 5,
+        "relationship": "自评",
+        "responses": [
+          {"questionCode": "SD001", "score": 3},
+          {"questionCode": "SD002", "score": 4},
+          {"questionCode": "ML001", "score": 4},
+          {"questionCode": "ML002", "score": 3},
+          {"questionCode": "ML003", "openText": "作为中层管理者，我专注于团队协调和执行力提升，确保上级战略能够有效传达并落实到基层。"}
+        ]
+      },
+      "expected360Weights": {
+        "上级": "40%",
+        "平级": "40%",
+        "下级": "20%"
+      }
+    },
+    {
+      "name": "基层管理者测试",
+      "description": "测试基层管理者的问卷",
+      "submissionData": {
+        "evaluationId": 3,
+        "respondentId": 6,
+        "relationship": "自评",
+        "responses": [
+          {"questionCode": "SD001", "score": 4},
+          {"questionCode": "SD002", "score": 3},
+          {"questionCode": "LL001", "score": 5},
+          {"questionCode": "LL002", "score": 4},
+          {"questionCode": "LL003", "openText": "作为基层管理者，我重点关注团队日常运营和员工发展，确保工作任务的高质量完成。"}
+        ]
+      },
+      "expected360Weights": {
+        "上级": "30%",
+        "平级": "30%",
+        "下级": "40%"
+      }
+    }
+  ],
+  "testAPIs": [
+    {
+      "name": "获取问卷API测试",
+      "endpoints": [
+        {
+          "method": "GET",
+          "url": "/questionnaires/by-role/高层领导者",
+          "description": "获取高层领导者问卷"
+        },
+        {
+          "method": "GET",
+          "url": "/questionnaires/by-role/中层管理者",
+          "description": "获取中层管理者问卷"
+        },
+        {
+          "method": "GET",
+          "url": "/questionnaires/by-role/基层管理者",
+          "description": "获取基层管理者问卷"
+        }
+      ]
+    },
+    {
+      "name": "问卷提交API测试",
+      "endpoint": {
+        "method": "POST",
+        "url": "/evaluations/submit-questionnaire",
+        "description": "提交问卷并计算得分"
+      }
+    },
+    {
+      "name": "360度评估API测试",
+      "endpoint": {
+        "method": "POST",
+        "url": "/evaluations/1/calculate-360",
+        "description": "计算360度评估结果"
+      }
+    }
+  ],
+  "scoringRules": {
+    "basic": "1-5分评分，1=几乎从不，2=很少，3=有时，4=经常，5=几乎总是",
+    "reverse": "反向计分题目按照 6-得分 进行计算",
+    "relevance": "相关性计算：(自主导向题目得分)*40% + (目标题目得分)*60%",
+    "360degree": {
+      "高层领导者": "上级*50% + 平级*30% + 下级*20%",
+      "中层管理者": "上级*40% + 平级*40% + 下级*20%",
+      "基层管理者": "上级*30% + 平级*30% + 下级*40%"
+    }
+  }
+}
