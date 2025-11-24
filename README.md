@@ -17,13 +17,21 @@
     cd GatewayTest
     ```
 
-2.  **配置环境变量 (可选)**
-    项目默认提供了一套开发用的环境变量。如需自定义（例如修改数据库密码或 SMTP 邮件配置），请修改 `docker-compose.yml` 中的 `environment` 部分，或者创建 `.env` 文件。
+2.  **配置环境变量**
+    复制示例配置文件：
+    ```bash
+    cp .env.example .env
+    ```
+    *你可以在 `.env` 文件中修改数据库密码或 SMTP 邮件配置。如果暂时不需要发送邮件，可以保持默认。*
 
 3.  **启动服务**
     在项目根目录下运行：
     ```bash
     docker-compose up -d --build
+    ```
+    **注意**: 如果遇到 `permission denied` 错误，请尝试在命令前加上 `sudo`：
+    ```bash
+    sudo docker-compose up -d --build
     ```
     *第一次运行可能需要几分钟时间来下载镜像和构建应用。*
 
