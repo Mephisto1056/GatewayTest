@@ -57,6 +57,16 @@ export class UsersService {
     if (!user) {
       throw new Error(`User with ID ${id} not found`);
     }
+    
+    // 如果更新了 organizationId，需要同时更新 organization 关系
+    if (userData.organizationId !== undefined && userData.organizationId !== user.organizationId) {
+      const organization = await this.organizationsService.findOne(userData.organizationId);
+      if (organization) {
+        user.organization = organization;
+        user.organizationId = userData.organizationId;
+      }
+    }
+    
     this.usersRepository.merge(user, userData);
     return this.usersRepository.save(user);
   }
@@ -260,12 +270,13 @@ export class UsersService {
         } else {
            // 更新用户
            user.organization = organization;
+           user.organizationId = organization.id; // 显式设置organizationId
            user.password = hashedPassword;
            user.role = finalRole;
            user.phone = phone || user.phone;
            user.position = jobTitle || user.position;
            user.company = companyName || user.company;
-        }
+         }
 
         // 立即保存用户，以便捕获单个用户的保存错误（如重复数据等），并防止 CSV 内重复邮箱导致的问题
         await this.usersRepository.save(user);

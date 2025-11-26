@@ -10,6 +10,10 @@ export class OrganizationsService {
     private organizationsRepository: Repository<Organization>,
   ) {}
 
+  async findOne(id: number): Promise<Organization | null> {
+    return this.organizationsRepository.findOneBy({ id });
+  }
+
   async findOneByName(name: string): Promise<Organization | null> {
     return this.organizationsRepository.findOneBy({ name });
   }
