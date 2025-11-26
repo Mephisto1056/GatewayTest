@@ -43,13 +43,22 @@ export class UsersController {
   @Post('batch-import')
   @UseInterceptors(FileInterceptor('file'))
   async batchImport(@UploadedFile() file: Express.Multer.File, @Res() res: Response) {
-    const buffer = await this.usersService.batchImport(file);
-    
-    res.set({
-      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'Content-Disposition': `attachment; filename=users-import-result-${Date.now()}.xlsx`,
-    });
-    
-    res.send(buffer);
+    try {
+      const buffer = await this.usersService.batchImport(file);
+      
+      res.set({
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': `attachment; filename=users-import-result-${Date.now()}.xlsx`,
+      });
+      
+      res.send(buffer);
+    } catch (error: any) {
+      console.error('Batch import failed:', error);
+      res.status(400).json({
+        statusCode: 400,
+        message: '导入失败',
+        error: error.message || 'Unknown error occurred during file processing',
+      });
+    }
   }
 }

@@ -102,6 +102,10 @@ export class UsersService {
   }
 
   async batchImport(file: Express.Multer.File): Promise<Buffer> {
+    if (!file || !file.buffer) {
+      throw new Error('未上传文件或文件内容为空');
+    }
+
     // 1. 检测文件编码
     const detection = jschardet.detect(file.buffer);
     let encoding = detection.encoding || 'utf-8';
@@ -229,6 +233,7 @@ export class UsersService {
         // 1. 创建组织 (每次导入都创建新的组织，同一次导入中相同的公司名共用一个)
         let organization = createdOrgsInThisBatch.get(companyName);
         if (!organization) {
+          // 始终创建新组织，允许同名组织存在（即使数据库中已有同名组织）
           organization = await this.organizationsService.create(companyName);
           createdOrgsInThisBatch.set(companyName, organization);
         }
@@ -275,7 +280,7 @@ export class UsersService {
         finalResultData.push({
           ...row,
           '导入结果': '失败',
-          '错误信息': error.message || '系统处理错误'
+          '错误信息': error?.message || '系统处理错误'
         });
       }
     }
