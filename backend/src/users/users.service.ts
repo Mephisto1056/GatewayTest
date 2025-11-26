@@ -134,7 +134,6 @@ export class UsersService {
     const usersData = xlsx.utils.sheet_to_json(worksheet) as any[];
 
     const resultData: any[] = [];
-    const usersToSave: User[] = [];
     const roleMap: Record<string, string> = {
       '高层': '高层领导者',
       '中层': '中层管理者',
@@ -252,7 +251,6 @@ export class UsersService {
             organization,
             password: hashedPassword,
           });
-          usersToSave.push(user);
         } else {
            // 更新用户
            user.organization = organization;
@@ -261,8 +259,10 @@ export class UsersService {
            user.phone = phone || user.phone;
            user.position = jobTitle || user.position;
            user.company = companyName || user.company;
-           usersToSave.push(user);
         }
+
+        // 立即保存用户，以便捕获单个用户的保存错误（如重复数据等），并防止 CSV 内重复邮箱导致的问题
+        await this.usersRepository.save(user);
 
         finalResultData.push({
           ...row,
@@ -271,18 +271,13 @@ export class UsersService {
           '导入结果': '成功'
         });
       } catch (error: any) {
-        // 理论上这里不应该发生数据校验错误，因为第一遍已经检查过了，除非是数据库错误
+        console.error(`Error importing user ${name} (${email}):`, error);
         finalResultData.push({
           ...row,
           '导入结果': '失败',
           '错误信息': error.message || '系统处理错误'
         });
       }
-    }
-
-    // 批量保存用户
-    if (usersToSave.length > 0) {
-      await this.usersRepository.save(usersToSave);
     }
 
     // 4. 生成包含密码和结果的新 Excel (XLSX)，避免乱码
