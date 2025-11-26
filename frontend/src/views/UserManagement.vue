@@ -504,6 +504,9 @@ const importUsers = async () => {
     formData.append('file', selectedFile.value)
     
     const response = await apiClient.post('/users/batch-import', formData, {
+      headers: {
+        'Content-Type': undefined  // 让浏览器自动设置 multipart/form-data 及 boundary
+      },
       responseType: 'blob'
     })
     
