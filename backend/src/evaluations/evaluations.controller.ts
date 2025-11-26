@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Query, UseGuards, Request, Delete } from '@nestjs/common';
 import { EvaluationsService, QuestionnaireSubmission } from './evaluations.service';
 import { Evaluation } from './entities/evaluation.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -54,6 +54,12 @@ export class EvaluationsController {
   @Get(':id/responses')
   getEvaluationResponses(@Param('id') id: string): Promise<EvaluationResponse[]> {
     return this.evaluationsService.getEvaluationResponses(+id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('organization/:orgId')
+  async deleteByOrganization(@Param('orgId') orgId: string) {
+    return this.evaluationsService.deleteByOrganization(+orgId);
   }
 
   // 计算360度评估结果

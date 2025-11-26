@@ -123,17 +123,27 @@
             
             <div class="form-group">
               <label>邮箱 *</label>
-              <input 
-                v-model="currentUser.email" 
+              <input
+                v-model="currentUser.email"
                 type="email"
-                required 
+                required
                 placeholder="请输入邮箱"
                 class="form-input"
               >
             </div>
           </div>
-          
+
           <div class="form-row">
+            <div class="form-group">
+              <label>密码 {{ showAddModal ? '*' : '(留空则不修改)' }}</label>
+              <input
+                v-model="currentUser.password"
+                type="password"
+                :required="showAddModal"
+                placeholder="请输入密码"
+                class="form-input"
+              >
+            </div>
             <div class="form-group">
               <label>职务</label>
               <input 
@@ -258,11 +268,13 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import MaterialIcon from '../components/icons/MaterialIcon.vue'
+import apiClient from '../services/api'
 
 interface User {
   id?: number
   name: string
   email: string
+  password?: string
   phone?: string
   role: string
   organizationId: number
@@ -283,6 +295,7 @@ const selectedFile = ref<File | null>(null)
 const currentUser = ref<User>({
   name: '',
   email: '',
+  password: '',
   phone: '',
   role: '',
   organizationId: 1,
@@ -324,12 +337,8 @@ const getRoleClass = (role: string) => {
 const loadUsers = async () => {
   loading.value = true
   try {
-    const response = await fetch('/api/users')
-    if (response.ok) {
-      users.value = await response.json()
-    } else {
-      throw new Error('获取用户列表失败')
-    }
+    const response = await apiClient.get('/users')
+    users.value = response.data
   } catch (error) {
     console.error('加载用户失败:', error)
     alert('加载用户失败，请重试')
@@ -413,6 +422,7 @@ const closeModal = () => {
   currentUser.value = {
     name: '',
     email: '',
+    password: '',
     phone: '',
     role: '',
     organizationId: 1,
@@ -449,30 +459,25 @@ const importUsers = async () => {
     const formData = new FormData()
     formData.append('file', selectedFile.value)
     
-    const response = await fetch('/api/users/batch-import', {
-      method: 'POST',
-      body: formData
+    const response = await apiClient.post('/users/batch-import', formData, {
+      responseType: 'blob'
     })
     
-    if (response.ok) {
-      // 处理返回的 Blob（包含密码的 CSV）
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `users-import-result-${new Date().toISOString().slice(0, 10)}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+    // 处理返回的 Blob（包含密码的 CSV）
+    const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `users-import-result-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
 
-      alert('导入成功！含有初始密码的用户表已自动下载，请妥善保管。')
-      closeImportModal()
-      loadUsers()
-    } else {
-      const errorData = await response.json()
-      throw new Error(errorData.message || '导入失败')
-    }
+    alert('导入成功！含有初始密码的用户表已自动下载，请妥善保管。')
+    closeImportModal()
+    loadUsers()
+
   } catch (error: any) {
     console.error('导入用户失败:', error)
     alert(error.message || '导入失败，请重试')

@@ -6,6 +6,8 @@ import { OrganizationsService } from '../organizations/organizations.service';
 import * as bcrypt from 'bcrypt';
 import * as xlsx from 'xlsx';
 import * as crypto from 'crypto';
+import * as jschardet from 'jschardet';
+import * as iconv from 'iconv-lite';
 
 @Injectable()
 export class UsersService {
@@ -68,8 +70,33 @@ export class UsersService {
   }
 
   async batchImport(file: Express.Multer.File): Promise<Buffer> {
-    // 处理可能存在的 BOM 问题，或者非 UTF-8 编码（虽然 xlsx 库通常能处理，但 CSV 的 BOM 可能会作为 key 的一部分）
-    const workbook = xlsx.read(file.buffer, { type: 'buffer', codepage: 65001 }); // 尝试指定 UTF-8
+    // 1. 检测文件编码
+    const detection = jschardet.detect(file.buffer);
+    let encoding = detection.encoding || 'utf-8';
+    
+    // 规范化编码名称
+    if (encoding.toUpperCase() === 'GB2312') {
+      encoding = 'GBK';
+    }
+
+    console.log(`User import file encoding detected: ${encoding} (Confidence: ${detection.confidence})`);
+
+    let workbook;
+    // 如果是 CSV 文件 (通常 mimetype 是 text/csv 或 application/vnd.ms-excel 但内容是文本)，或者检测出来是纯文本编码
+    // 我们尝试转换编码。为了保险，如果检测到是 GBK/GB2312，手动转码
+    if (encoding.toUpperCase() === 'GBK' || file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+       try {
+          const content = iconv.decode(file.buffer, encoding);
+          workbook = xlsx.read(content, { type: 'string' });
+       } catch (e) {
+          console.warn('Failed to decode with iconv, falling back to default xlsx read', e);
+          workbook = xlsx.read(file.buffer, { type: 'buffer', codepage: 65001 });
+       }
+    } else {
+       // 对于标准的 xlsx 文件，通常不需要手动处理编码
+       workbook = xlsx.read(file.buffer, { type: 'buffer' });
+    }
+
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const usersData = xlsx.utils.sheet_to_json(worksheet) as any[];
@@ -139,6 +166,8 @@ export class UsersService {
     // 第二遍：处理数据并保存 (只有当所有校验通过时才执行)
     // 重置 resultData 以便填充最终结果（包含密码）
     const finalResultData: any[] = [];
+    // 维护一个本次导入的组织缓存，确保同一批次中相同的公司名使用同一个新创建的组织
+    const createdOrgsInThisBatch = new Map<string, any>();
 
     for (const row of usersData) {
       // 再次使用 getVal 逻辑确保能取到值
@@ -166,8 +195,12 @@ export class UsersService {
       }
 
       try {
-        // 1. 查找或创建组织
-        const organization = await this.organizationsService.findOrCreate(companyName);
+        // 1. 创建组织 (每次导入都创建新的组织，同一次导入中相同的公司名共用一个)
+        let organization = createdOrgsInThisBatch.get(companyName);
+        if (!organization) {
+          organization = await this.organizationsService.create(companyName);
+          createdOrgsInThisBatch.set(companyName, organization);
+        }
 
         // 2. 生成随机密码 (8位字母数字)
         const rawPassword = crypto.randomBytes(4).toString('hex');

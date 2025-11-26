@@ -10,6 +10,10 @@
           <MaterialIcon name="refresh" size="sm" />
           刷新数据
         </button>
+        <button type="button" class="btn btn-danger" style="background-color: #ef4444; color: white; margin-right: 10px;" @click="showBatchDeleteModal = true">
+          <MaterialIcon name="delete" size="sm" />
+          批量删除
+        </button>
         <button type="button" class="btn btn-primary" @click="showCreateModal = true">
           <MaterialIcon name="plus" size="sm" />
           创建评估
@@ -239,6 +243,54 @@
         </div>
       </div>
     </section>
+
+    <!-- 批量删除模态框 -->
+    <div v-if="showBatchDeleteModal" class="modal-overlay" @click="closeBatchDeleteModal">
+      <div class="modal-content modal-content--small" @click.stop>
+        <div class="modal-header">
+          <div>
+            <h2>批量删除评估</h2>
+            <p class="modal-subtitle" style="color: #ef4444;">警告：此操作将删除所选组织下所有用户的评估任务及相关回答，且不可恢复。</p>
+          </div>
+          <button type="button" class="modal-close" @click="closeBatchDeleteModal">
+            <MaterialIcon name="close" size="sm" />
+          </button>
+        </div>
+
+        <div class="modal-body" style="padding: 1.5rem;">
+          <div class="form-group">
+            <label>选择要清空的组织</label>
+            <select v-model="selectedDeleteOrgId" class="form-select">
+              <option value="">请选择公司/组织</option>
+              <option v-for="org in organizations" :key="org.id" :value="org.id">
+                {{ org.name }}
+              </option>
+            </select>
+          </div>
+
+          <div v-if="selectedDeleteOrgId" class="alert-box" style="background: #fef2f2; border: 1px solid #fecaca; padding: 1rem; border-radius: 6px; margin-top: 1rem; color: #991b1b;">
+             <div style="font-weight: bold; margin-bottom: 0.5rem;">即将删除的内容：</div>
+             <ul style="padding-left: 1.5rem; margin: 0;">
+               <li>该组织下所有用户的评估任务</li>
+               <li>所有相关的问卷回答数据</li>
+               <li>所有参与者记录</li>
+             </ul>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="padding: 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px;">
+          <button class="btn btn-ghost" @click="closeBatchDeleteModal">取消</button>
+          <button
+            class="btn btn-danger"
+            style="background-color: #ef4444; color: white;"
+            :disabled="!selectedDeleteOrgId || isDeleting"
+            @click="batchDeleteByOrg"
+          >
+            {{ isDeleting ? '删除中...' : '确认彻底删除' }}
+          </button>
+        </div>
+      </div>
+    </div>
 
     <div v-if="showCreateModal" class="modal-overlay" @click="closeCreateModal">
       <div class="modal-content modal-content--medium" @click.stop>
@@ -563,8 +615,11 @@ const users = ref<User[]>([])
 const selectedStatus = ref('')
 const searchKeyword = ref('')
 const showCreateModal = ref(false)
+const showBatchDeleteModal = ref(false)
 const selectedOrgId = ref<number | ''>('')
+const selectedDeleteOrgId = ref<number | ''>('')
 const isBatchCreating = ref(false)
+const isDeleting = ref(false)
 const showShareModal = ref(false)
 const showDetailsModal = ref(false)
 const linkCopied = ref(false)
@@ -1056,6 +1111,43 @@ const closeCreateModal = () => {
     startDate: '',
     endDate: '',
     questionnaireType: ''
+  }
+}
+
+const closeBatchDeleteModal = () => {
+  showBatchDeleteModal.value = false
+  selectedDeleteOrgId.value = ''
+}
+
+const batchDeleteByOrg = async () => {
+  if (!selectedDeleteOrgId.value) return
+
+  if (!confirm('再次确认：您确定要删除该组织下的所有评估数据吗？此操作无法撤销！')) {
+    return
+  }
+
+  isDeleting.value = true
+  try {
+    const response = await fetch(`/api/evaluations/organization/${selectedDeleteOrgId.value}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+      }
+    })
+
+    if (response.ok) {
+      const result = await response.json()
+      alert(result.message || '删除成功')
+      closeBatchDeleteModal()
+      loadEvaluations() // 刷新列表
+    } else {
+      throw new Error('删除请求失败')
+    }
+  } catch (error) {
+    console.error('批量删除失败:', error)
+    alert('批量删除失败，请稍后重试')
+  } finally {
+    isDeleting.value = false
   }
 }
 

@@ -6,7 +6,7 @@ export class Organization {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
+  @Column()
   name: string;
 
   @CreateDateColumn({ name: 'created_at' })

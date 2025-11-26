@@ -5,6 +5,7 @@ import { QuestionHighleveltest } from '../questionnaires/entities/question-highl
 import { getRepositoryToken } from '@nestjs/typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
+import { readCsvContent } from '../utils/csv-helper';
 
 async function importHighleveltestQuestions() {
   const app = await NestFactory.createApplicationContext(AppModule);
@@ -15,8 +16,7 @@ async function importHighleveltestQuestions() {
   try {
     // 读取CSV文件
     const csvPath = path.join(__dirname, '../../../questionlist/question_highleveltest.csv');
-    const csvContent = fs.readFileSync(csvPath, 'utf-8');
-    const lines = csvContent.split('\n');
+    const lines = readCsvContent(csvPath);
     
     // 跳过表头，从第二行开始处理
     for (let i = 1; i < lines.length; i++) {

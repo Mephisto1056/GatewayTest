@@ -8,6 +8,7 @@ import { QuestionMediumleveltest } from '../questionnaires/entities/question-med
 import { getRepositoryToken } from '@nestjs/typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
+import { readCsvContent } from '../utils/csv-helper';
 
 async function importAllQuestions() {
   const app = await NestFactory.createApplicationContext(AppModule);
@@ -53,8 +54,7 @@ const questionListPath = process.env.QUESTION_LIST_PATH || path.join(__dirname, 
 async function importSelfdirectedQuestions(repo: Repository<QuestionSelfdirected>) {
   console.log('导入自主导向问题...');
   const csvPath = path.join(questionListPath, 'question_selfdirected.csv');
-  const csvContent = fs.readFileSync(csvPath, 'utf-8');
-  const lines = csvContent.split('\n');
+  const lines = readCsvContent(csvPath);
   
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -84,8 +84,7 @@ async function importSelfdirectedQuestions(repo: Repository<QuestionSelfdirected
 async function importHighleveltestQuestions(repo: Repository<QuestionHighleveltest>) {
   console.log('导入高层测试问题...');
   const csvPath = path.join(questionListPath, 'question_highleveltest.csv');
-  const csvContent = fs.readFileSync(csvPath, 'utf-8');
-  const lines = csvContent.split('\n');
+  const lines = readCsvContent(csvPath);
   
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -118,8 +117,7 @@ async function importHighleveltestQuestions(repo: Repository<QuestionHighlevelte
 async function importLowleveltestQuestions(repo: Repository<QuestionLowleveltest>) {
   console.log('导入基层测试问题...');
   const csvPath = path.join(questionListPath, 'question_lowleveltest.csv');
-  const csvContent = fs.readFileSync(csvPath, 'utf-8');
-  const lines = csvContent.split('\n');
+  const lines = readCsvContent(csvPath);
   
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -152,8 +150,7 @@ async function importLowleveltestQuestions(repo: Repository<QuestionLowleveltest
 async function importMediumleveltestQuestions(repo: Repository<QuestionMediumleveltest>) {
   console.log('导入中层测试问题...');
   const csvPath = path.join(questionListPath, 'question_mediumleveltest.csv');
-  const csvContent = fs.readFileSync(csvPath, 'utf-8');
-  const lines = csvContent.split('\n');
+  const lines = readCsvContent(csvPath);
   
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();

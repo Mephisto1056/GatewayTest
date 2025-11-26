@@ -80,8 +80,8 @@
           <div class="action-icon">
             <MaterialIcon name="users" size="xl" />
           </div>
-          <h3>添加用户</h3>
-          <p>添加新用户到系统</p>
+          <h3>管理用户</h3>
+          <p>添加、编辑和管理用户信息</p>
         </router-link>
         
         <router-link to="/dashboard/questions" class="action-card">
@@ -121,9 +121,10 @@ const stats = ref({
 const recentActivities = ref<any[]>([])
 
 // 格式化时间
-const formatTime = (time: Date) => {
+const formatTime = (time: Date | string) => {
   const now = new Date()
-  const diff = now.getTime() - time.getTime()
+  const date = new Date(time)
+  const diff = now.getTime() - date.getTime()
   const minutes = Math.floor(diff / (1000 * 60))
   const hours = Math.floor(diff / (1000 * 60 * 60))
   const days = Math.floor(diff / (1000 * 60 * 60 * 24))

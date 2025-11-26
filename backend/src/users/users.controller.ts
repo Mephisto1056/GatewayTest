@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, UseInterceptors, UploadedFile, Res } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Delete, UseInterceptors, UploadedFile, Res } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { UsersService } from './users.service';
@@ -21,6 +21,11 @@ export class UsersController {
   @Post()
   create(@Body() userData: Partial<User>): Promise<User> {
     return this.usersService.create(userData);
+  }
+
+  @Put(':id')
+  update(@Param('id') id: string, @Body() userData: Partial<User>): Promise<User> {
+    return this.usersService.update(+id, userData);
   }
 
   @Delete(':id')

@@ -387,6 +387,45 @@ export class EvaluationsService {
     });
   }
 
+  // 按组织批量删除评估
+  async deleteByOrganization(organizationId: number): Promise<{ success: boolean; count: number; message: string }> {
+    // 1. 查找该组织下的所有用户
+    const allUsers = await this.usersService.findAll();
+    const orgUserIds = allUsers
+      .filter(u => u.organization && u.organization.id === organizationId)
+      .map(u => u.id);
+
+    if (orgUserIds.length === 0) {
+      return { success: false, count: 0, message: '该组织下没有用户' };
+    }
+
+    // 2. 查找这些用户的评估任务
+    const evaluations = await this.evaluationsRepository.find({
+      where: { userId: In(orgUserIds) }
+    });
+
+    if (evaluations.length === 0) {
+      return { success: true, count: 0, message: '该组织下没有相关评估任务' };
+    }
+
+    const evaluationIds = evaluations.map(e => e.id);
+
+    // 3. 删除关联数据
+    // 删除回答
+    await this.evaluationResponsesRepository.delete({ evaluationId: In(evaluationIds) });
+    // 删除参与者
+    await this.participantsRepository.delete({ evaluationId: In(evaluationIds) });
+
+    // 4. 删除评估任务
+    await this.evaluationsRepository.delete({ id: In(evaluationIds) });
+
+    return {
+      success: true,
+      count: evaluations.length,
+      message: `成功删除了 ${evaluations.length} 个评估任务`
+    };
+  }
+
   // 获取我的评估任务 (支持状态筛选)
   async findMyTasks(participantId: number, status?: string): Promise<EvaluationParticipant[]> {
     const whereClause: any = { participantId };
