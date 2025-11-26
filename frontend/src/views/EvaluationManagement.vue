@@ -551,6 +551,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import MaterialIcon from '../components/icons/MaterialIcon.vue'
+import apiClient from '../services/api'
 
 const router = useRouter()
 
@@ -898,28 +899,24 @@ const getStatusText = (status: string) => {
 const loadEvaluations = async () => {
   loading.value = true
   try {
-    const response = await fetch('/api/evaluations')
-    if (response.ok) {
-      const data = await response.json()
-      evaluations.value = data.map((evaluation: any) => {
-        // Calculate progress
-        // Filter out nomination tasks from total count as they don't produce evaluation responses
-        const totalParticipants = evaluation.participants?.filter((p: any) => p.relationship !== '提名').length || 0
-        const uniqueRespondents = new Set(
-          evaluation.responses?.map((r: any) => r.respondentId)
-        ).size
+    const response = await apiClient.get('/evaluations')
+    const data = response.data
+    evaluations.value = data.map((evaluation: any) => {
+      // Calculate progress
+      // Filter out nomination tasks from total count as they don't produce evaluation responses
+      const totalParticipants = evaluation.participants?.filter((p: any) => p.relationship !== '提名').length || 0
+      const uniqueRespondents = new Set(
+        evaluation.responses?.map((r: any) => r.respondentId)
+      ).size
 
-        return {
-          ...evaluation,
-          progress: {
-            total: totalParticipants,
-            completed: uniqueRespondents
-          }
+      return {
+        ...evaluation,
+        progress: {
+          total: totalParticipants,
+          completed: uniqueRespondents
         }
-      })
-    } else {
-      throw new Error('加载失败')
-    }
+      }
+    })
   } catch (error) {
     console.error('加载评估失败:', error)
     alert('加载评估失败，请稍后重试')
@@ -930,10 +927,8 @@ const loadEvaluations = async () => {
 
 const loadUsers = async () => {
   try {
-    const response = await fetch('/api/users')
-    if (response.ok) {
-      users.value = await response.json()
-    }
+    const response = await apiClient.get('/users')
+    users.value = response.data
   } catch (error) {
     console.error('加载用户失败:', error)
   }

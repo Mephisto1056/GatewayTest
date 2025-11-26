@@ -62,7 +62,33 @@ export class UsersService {
   }
 
   async remove(id: number): Promise<void> {
-    await this.usersRepository.delete(id);
+    try {
+        await this.usersRepository.delete(id);
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        if (error.code === '23503') { // PostgreSQL foreign key violation code
+            throw new Error('无法删除用户：该用户存在关联数据（如评估记录），请先删除相关数据或联系管理员。');
+        }
+        throw error;
+    }
+  }
+
+  async batchRemove(ids: number[]): Promise<{ successCount: number; failCount: number; errors: string[] }> {
+    let successCount = 0;
+    let failCount = 0;
+    const errors: string[] = [];
+
+    for (const id of ids) {
+      try {
+        await this.remove(id);
+        successCount++;
+      } catch (error: any) {
+        failCount++;
+        errors.push(`ID ${id}: ${error.message}`);
+      }
+    }
+
+    return { successCount, failCount, errors };
   }
 
   async count(): Promise<number> {

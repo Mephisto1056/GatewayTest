@@ -30,10 +30,16 @@ export class UsersController {
     return this.usersService.update(+id, userData);
   }
 
+  @Delete('batch')
+  async batchRemove(@Body() body: { ids: number[] }) {
+    return this.usersService.batchRemove(body.ids);
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string): Promise<void> {
     return this.usersService.remove(+id);
   }
+
   @Post('batch-import')
   @UseInterceptors(FileInterceptor('file'))
   async batchImport(@UploadedFile() file: Express.Multer.File, @Res() res: Response) {

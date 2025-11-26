@@ -24,6 +24,15 @@
       </div>
       
       <div class="actions">
+        <button
+          v-if="selectedUserIds.length > 0"
+          @click="batchDeleteUsers"
+          class="btn btn-danger"
+          style="margin-right: 8px; background-color: #ef4444; color: white; border: none;"
+        >
+          <MaterialIcon name="delete" size="sm" />
+          批量删除 ({{ selectedUserIds.length }})
+        </button>
         <button @click="showAddModal = true" class="btn btn-primary">
           <MaterialIcon name="users" size="sm" />
           添加用户
@@ -54,6 +63,9 @@
         <table>
           <thead>
             <tr>
+              <th>
+                <input type="checkbox" :checked="isAllSelected" @change="toggleAllSelection">
+              </th>
               <th>ID</th>
               <th>姓名</th>
               <th>职务</th>
@@ -67,6 +79,9 @@
           </thead>
           <tbody>
             <tr v-for="user in filteredUsers" :key="user.id" class="user-row">
+              <td>
+                <input type="checkbox" :value="user.id" v-model="selectedUserIds">
+              </td>
               <td>{{ user.id }}</td>
               <td class="user-name">
                 <div class="name-avatar">
@@ -287,6 +302,7 @@ const loading = ref(true)
 const users = ref<User[]>([])
 const selectedRole = ref('')
 const searchKeyword = ref('')
+const selectedUserIds = ref<number[]>([])
 const showAddModal = ref(false)
 const showEditModal = ref(false)
 const showImportModal = ref(false)
@@ -315,13 +331,17 @@ const filteredUsers = computed(() => {
   // 按关键词搜索
   if (searchKeyword.value) {
     const keyword = searchKeyword.value.toLowerCase()
-    filtered = filtered.filter(u => 
+    filtered = filtered.filter(u =>
       u.name.toLowerCase().includes(keyword) ||
       u.email.toLowerCase().includes(keyword)
     )
   }
 
   return filtered
+})
+
+const isAllSelected = computed(() => {
+  return filteredUsers.value.length > 0 && selectedUserIds.value.length === filteredUsers.value.length
 })
 
 // 方法
@@ -336,6 +356,7 @@ const getRoleClass = (role: string) => {
 
 const loadUsers = async () => {
   loading.value = true
+  selectedUserIds.value = [] // 重置选择
   try {
     const response = await apiClient.get('/users')
     users.value = response.data
@@ -349,6 +370,44 @@ const loadUsers = async () => {
 
 const filterUsers = () => {
   // 筛选功能通过计算属性实现
+  selectedUserIds.value = [] // 筛选条件改变时重置选择
+}
+
+const toggleAllSelection = () => {
+  if (isAllSelected.value) {
+    selectedUserIds.value = []
+  } else {
+    selectedUserIds.value = filteredUsers.value.map(u => u.id!)
+  }
+}
+
+const batchDeleteUsers = async () => {
+  if (selectedUserIds.value.length === 0) return
+
+  if (!confirm(`确定要删除选中的 ${selectedUserIds.value.length} 个用户吗？此操作不可恢复。`)) {
+    return
+  }
+
+  try {
+    // 后端需要支持批量删除接口，或者我们循环调用删除接口
+    // 建议后端实现批量删除接口: DELETE /users/batch { ids: [] }
+    // 这里假设后端已经实现了批量删除接口
+    const response = await apiClient.delete('/users/batch', {
+      data: { ids: selectedUserIds.value }
+    })
+
+    const result = response.data
+    let message = `成功删除 ${result.successCount} 个用户`
+    if (result.failCount > 0) {
+      message += `，失败 ${result.failCount} 个。\n失败原因：\n${result.errors.join('\n')}`
+    }
+    alert(message)
+    
+    loadUsers()
+  } catch (error: any) {
+    console.error('批量删除失败:', error)
+    alert('批量删除失败，请重试')
+  }
 }
 
 const editUser = (user: User) => {
