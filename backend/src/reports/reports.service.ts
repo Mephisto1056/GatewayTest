@@ -37,6 +37,24 @@ export class ReportsService {
     });
   }
 
+  async findOne(id: number): Promise<Report | null> {
+    return this.reportsRepository.findOne({
+      where: { id },
+      relations: ['user']
+    });
+  }
+
+  async remove(id: number): Promise<void> {
+    await this.reportsRepository.delete(id);
+  }
+
+  async getUserReports(userId: number): Promise<Report[]> {
+    return this.reportsRepository.find({
+      where: { userId },
+      order: { generatedAt: 'DESC' }
+    });
+  }
+
   async generatePersonalReport(userId: number): Promise<Report> {
     try {
       // 获取用户信息
@@ -1007,16 +1025,6 @@ ${weaknesses.map((w, i) => `${i + 1}. ${w.dimension} (得分率: ${w.percentage.
     return `https://example.com/${fileName}`; // 暂时返回示例 URL
   }
 
-  async findOne(id: number): Promise<Report | null> {
-    return this.reportsRepository.findOneBy({ id });
-  }
-
-  async getUserReports(userId: number): Promise<Report[]> {
-    return this.reportsRepository.find({
-      where: { userId },
-      order: { generatedAt: 'DESC' },
-    });
-  }
 
   async getReportFileUrl(id: number): Promise<string> {
     const report = await this.reportsRepository.findOneBy({ id });

@@ -1,4 +1,4 @@
-import { Controller, Post, Param, Get, Body, UseGuards, Request, Res, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Param, Get, Body, UseGuards, Request, Res, HttpException, HttpStatus, Delete } from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { Report } from './entities/report.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -63,6 +63,25 @@ export class ReportsController {
   @Get(':id')
   findOne(@Param('id') id: string): Promise<Report | null> {
     return this.reportsService.findOne(+id);
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    try {
+      await this.reportsService.remove(+id);
+      return {
+        success: true,
+        message: '报告删除成功',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || '删除报告失败',
+      };
+    }
   }
 
   @Get(':id/comprehensive')

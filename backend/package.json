@@ -12,8 +12,8 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "seed": "ts-node src/scripts/seed.ts",
-    "cleanup": "ts-node src/scripts/cleanup-users.ts",
+    "seed": "npx ts-node src/scripts/seed.ts",
+    "cleanup": "npx ts-node src/scripts/cleanup-users.ts",
     "cleanup:prod": "node dist/scripts/cleanup-users.js",
     "seed:prod": "node dist/scripts/seed.js",
     "import:prod": "node dist/scripts/import-all-questions.js",
@@ -23,8 +23,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "import:all-questions": "ts-node -r tsconfig-paths/register ./src/scripts/import-all-questions.ts",
-    "import:selfdirected": "ts-node -r tsconfig-paths/register ./src/scripts/import-selfdirected-questions.ts"
+    "import:all-questions": "npx ts-node -r tsconfig-paths/register ./src/scripts/import-all-questions.ts",
+    "import:selfdirected": "npx ts-node -r tsconfig-paths/register ./src/scripts/import-selfdirected-questions.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

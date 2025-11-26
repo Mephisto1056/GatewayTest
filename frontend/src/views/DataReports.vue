@@ -157,6 +157,9 @@
                     <button @click="downloadReport(report)" class="icon-btn" title="下载报告">
                       <MaterialIcon name="download" size="sm" />
                     </button>
+                    <button @click="deleteReport(report)" class="icon-btn text-danger" title="删除报告">
+                      <MaterialIcon name="delete" size="sm" />
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -347,7 +350,41 @@ const viewComprehensiveReport = async (report: Report) => {
 
 const downloadReport = (report: Report) => {
   // 实现下载报告功能
-  alert(`下载 ${report.userName} 的评估报告（功能开发中）`)
+  // alert(`下载 ${report.userName} 的评估报告（功能开发中）`)
+  window.open(`/api/reports/download/${report.id}`, '_blank')
+}
+
+const deleteReport = async (report: Report) => {
+  if (!confirm(`确定要删除 ${report.userName} 的评估报告吗？此操作不可恢复。`)) {
+    return
+  }
+  
+  try {
+    const response = await fetch(`/api/reports/${report.id}`, {
+      method: 'DELETE'
+    })
+    
+    const data = await response.json()
+    
+    if (data.success) {
+      // 从列表中移除
+      reports.value = reports.value.filter(r => r.id !== report.id)
+      // 更新统计数据
+      const total = reports.value.length
+      stats.value = {
+        ...stats.value,
+        totalEvaluations: total,
+        completedEvaluations: total,
+        averageScore: total > 0 ? reports.value.reduce((sum, r) => sum + r.percentage, 0) / total : 0,
+        participantCount: new Set(reports.value.map(r => r.userId)).size
+      }
+    } else {
+      alert(data.message || '删除失败')
+    }
+  } catch (error) {
+    console.error('删除报告失败:', error)
+    alert('删除报告失败，请重试')
+  }
 }
 
 // const shareReport = (report: Report) => {
