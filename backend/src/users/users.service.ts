@@ -106,30 +106,19 @@ export class UsersService {
       throw new Error('未上传文件或文件内容为空');
     }
 
-    // 1. 检测文件编码
-    const detection = jschardet.detect(file.buffer);
-    let encoding = detection.encoding || 'utf-8';
-    
-    // 规范化编码名称
-    if (encoding.toUpperCase() === 'GB2312') {
-      encoding = 'GBK';
-    }
-
-    console.log(`User import file encoding detected: ${encoding} (Confidence: ${detection.confidence})`);
-
     let workbook;
-    // 如果是 CSV 文件 (通常 mimetype 是 text/csv 或 application/vnd.ms-excel 但内容是文本)，或者检测出来是纯文本编码
-    // 我们尝试转换编码。为了保险，如果检测到是 GBK/GB2312，手动转码
-    if (encoding.toUpperCase() === 'GBK' || file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
-       try {
-          const content = iconv.decode(file.buffer, encoding);
-          workbook = xlsx.read(content, { type: 'string' });
-       } catch (e) {
-          console.warn('Failed to decode with iconv, falling back to default xlsx read', e);
-          workbook = xlsx.read(file.buffer, { type: 'buffer', codepage: 65001 });
-       }
+    
+    // 检查是否为 CSV 文件
+    const isCsv = file.mimetype === 'text/csv' ||
+                  file.originalname.toLowerCase().endsWith('.csv') ||
+                  file.mimetype === 'application/vnd.ms-excel'; // 有些系统将 CSV 识别为这个
+
+    if (isCsv) {
+       // 使用增强的 CSV 解析逻辑
+       workbook = this.tryParseCsvWithEncodings(file.buffer);
     } else {
        // 对于标准的 xlsx 文件，通常不需要手动处理编码
+       // 除非 jschardet 强力认为是文本且像 CSV，否则交给 xlsx 库直接处理 buffer
        workbook = xlsx.read(file.buffer, { type: 'buffer' });
     }
 
@@ -311,5 +300,83 @@ export class UsersService {
     if (jobTitle.includes('总监') || jobTitle.includes('经理')) return '中层管理者';
     if (jobTitle.includes('主管') || jobTitle.includes('组长')) return '基层管理者';
     return '基层管理者'; // 默认
+  }
+
+  /**
+   * 尝试使用多种编码解析 CSV 文件
+   * 优先尝试 UTF-8 和 GBK/GB18030，通过检查关键列头来判断是否解析正确
+   */
+  private tryParseCsvWithEncodings(buffer: Buffer): xlsx.WorkBook {
+    // 优先尝试的编码列表
+    const encodingsToTry = ['UTF-8', 'GBK', 'GB18030'];
+    
+    // 加入 jschardet 检测到的编码作为备选
+    const detection = jschardet.detect(buffer);
+    console.log(`Initial encoding detection: ${detection.encoding} (Confidence: ${detection.confidence})`);
+    
+    if (detection.encoding) {
+      let detected = detection.encoding.toUpperCase();
+      if (detected === 'GB2312') detected = 'GBK';
+      if (!encodingsToTry.includes(detected)) {
+        encodingsToTry.push(detected);
+      }
+    }
+
+    for (const encoding of encodingsToTry) {
+      try {
+        // 使用指定编码解码 buffer
+        const content = iconv.decode(buffer, encoding);
+        // xlsx.read type='string' 用于读取 CSV 文本内容
+        const wb = xlsx.read(content, { type: 'string' });
+        
+        if (wb.SheetNames.length > 0) {
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          // 读取第一行作为表头检查
+          const headers = xlsx.utils.sheet_to_json(sheet, { header: 1 })[0] as any[];
+          
+          if (headers && Array.isArray(headers)) {
+            const headerStr = headers.map(h => String(h).trim()).join(',');
+            // 检查是否包含关键列名 (只要包含其中两个关键字段即认为解析正确)
+            // 允许 key 带有 BOM 或空格
+            const hasName = headerStr.includes('姓名');
+            const hasEmail = headerStr.includes('邮箱');
+            const hasCompany = headerStr.includes('公司');
+            
+            if ((hasName && hasEmail) || (hasName && hasCompany) || (hasEmail && hasCompany)) {
+              console.log(`Successfully parsed CSV with encoding: ${encoding}`);
+              return wb;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn(`Failed to parse CSV with encoding ${encoding}`, e);
+      }
+    }
+
+    // 如果所有尝试都失败，回退到默认处理（使用检测到的编码或 UTF-8）
+    console.warn('All encoding attempts failed or headers not found. Falling back to detection.');
+
+    // 最后的尝试：直接让 xlsx 处理 buffer，以防是 binary file (xlsx/xls) 或者是 xlsx 能自动识别的情况
+    try {
+      const wb = xlsx.read(buffer, { type: 'buffer' });
+      if (wb.SheetNames.length > 0) {
+        // 同样检查一下是否有正确的内容，防止读出一堆乱码 sheet
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const headers = xlsx.utils.sheet_to_json(sheet, { header: 1 })[0] as any[];
+        if (headers && Array.isArray(headers)) {
+           const headerStr = headers.map(h => String(h).trim()).join(',');
+           if (headerStr.includes('姓名') || headerStr.includes('邮箱')) {
+             console.log('Successfully parsed with generic xlsx read');
+             return wb;
+           }
+        }
+      }
+    } catch(e) {
+      // ignore
+    }
+
+    const finalEncoding = detection.encoding || 'UTF-8';
+    const content = iconv.decode(buffer, finalEncoding);
+    return xlsx.read(content, { type: 'string' });
   }
 }
