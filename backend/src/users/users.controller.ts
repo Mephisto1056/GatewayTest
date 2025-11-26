@@ -1,10 +1,12 @@
-import { Controller, Get, Post, Put, Body, Param, Delete, UseInterceptors, UploadedFile, Res } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Delete, UseInterceptors, UploadedFile, Res, UseGuards } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('users')
+@UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

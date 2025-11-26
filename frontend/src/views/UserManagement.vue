@@ -367,16 +367,9 @@ const deleteUser = async (user: User) => {
   }
   
   try {
-    const response = await fetch(`/api/users/${user.id}`, {
-      method: 'DELETE'
-    })
-    
-    if (response.ok) {
-      alert('删除成功')
-      loadUsers()
-    } else {
-      throw new Error('删除失败')
-    }
+    await apiClient.delete(`/users/${user.id}`)
+    alert('删除成功')
+    loadUsers()
   } catch (error) {
     console.error('删除用户失败:', error)
     alert('删除失败，请重试')
@@ -386,33 +379,25 @@ const deleteUser = async (user: User) => {
 const saveUser = async () => {
   try {
     const isEdit = showEditModal.value
-    const endpoint = isEdit ? `/api/users/${currentUser.value.id}` : '/api/users'
-    const method = isEdit ? 'PUT' : 'POST'
     
     // 确保organizationId有默认值
     if (!currentUser.value.organizationId) {
       currentUser.value.organizationId = 1
     }
     
-    const response = await fetch(endpoint, {
-      method,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(currentUser.value)
-    })
-    
-    if (response.ok) {
-      alert(isEdit ? '保存成功' : '添加成功')
-      closeModal()
-      loadUsers()
+    if (isEdit) {
+      await apiClient.put(`/users/${currentUser.value.id}`, currentUser.value)
     } else {
-      const errorData = await response.json()
-      throw new Error(errorData.message || (isEdit ? '保存失败' : '添加失败'))
+      await apiClient.post('/users', currentUser.value)
     }
+    
+    alert(isEdit ? '保存成功' : '添加成功')
+    closeModal()
+    loadUsers()
   } catch (error: any) {
     console.error('保存用户失败:', error)
-    alert(error.message || '操作失败，请重试')
+    const message = error.response?.data?.message || error.message || '操作失败，请重试'
+    alert(message)
   }
 }
 
