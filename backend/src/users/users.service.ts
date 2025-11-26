@@ -133,9 +133,17 @@ export class UsersService {
        workbook = xlsx.read(file.buffer, { type: 'buffer' });
     }
 
+    if (!workbook.SheetNames.length) {
+      throw new Error('Excel文件没有任何工作表');
+    }
+
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const usersData = xlsx.utils.sheet_to_json(worksheet) as any[];
+
+    if (!usersData || usersData.length === 0) {
+      throw new Error('文件内容为空或无法识别列头');
+    }
 
     const resultData: any[] = [];
     const roleMap: Record<string, string> = {
@@ -147,6 +155,8 @@ export class UsersService {
 
     // 第一遍：校验整个文件
     for (const row of usersData) {
+      if (!row || typeof row !== 'object') continue;
+      
       // 处理 key 可能带有 BOM 或空格的情况
       const getVal = (keys: string[]) => {
         for (const k of keys) {
@@ -158,10 +168,10 @@ export class UsersService {
         return undefined;
       };
 
-      const companyName = getVal(['公司']);
-      const name = getVal(['姓名']);
-      const level = getVal(['层级']);
-      const email = getVal(['邮箱']);
+      const companyName = getVal(['公司'])?.toString().trim();
+      const name = getVal(['姓名'])?.toString().trim();
+      const level = getVal(['层级'])?.toString().trim();
+      const email = getVal(['邮箱'])?.toString().trim();
       
       const rowResult: any = { ...row };
       const errors: string[] = [];
@@ -205,6 +215,8 @@ export class UsersService {
     const createdOrgsInThisBatch = new Map<string, any>();
 
     for (const row of usersData) {
+      if (!row || typeof row !== 'object') continue;
+      
       // 再次使用 getVal 逻辑确保能取到值
       const getVal = (keys: string[]) => {
         for (const k of keys) {
@@ -215,12 +227,12 @@ export class UsersService {
         return undefined;
       };
 
-      const companyName = getVal(['公司']);
-      const name = getVal(['姓名']);
-      const level = getVal(['层级']);
-      const jobTitle = getVal(['职位']) || '';
-      const email = getVal(['邮箱']);
-      const phone = getVal(['手机号', '电话']) || ''; // 支持 '电话' 列名
+      const companyName = getVal(['公司'])?.toString().trim();
+      const name = getVal(['姓名'])?.toString().trim();
+      const level = getVal(['层级'])?.toString().trim();
+      const jobTitle = getVal(['职位'])?.toString().trim() || '';
+      const email = getVal(['邮箱'])?.toString().trim();
+      const phone = getVal(['手机号', '电话'])?.toString().trim() || ''; // 支持 '电话' 列名
 
       let finalRole = '基层管理者'; // 默认
       if (level && roleMap[level]) {

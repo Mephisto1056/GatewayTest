@@ -524,7 +524,31 @@ const importUsers = async () => {
 
   } catch (error: any) {
     console.error('导入用户失败:', error)
-    alert(error.message || '导入失败，请重试')
+    
+    let errorMessage = error.message || '导入失败，请重试'
+    
+    // 如果是 Blob 类型的错误响应，需要转换成文本才能看到具体的错误信息
+    if (error.response && error.response.data instanceof Blob) {
+      try {
+        const text = await error.response.data.text()
+        try {
+          const json = JSON.parse(text)
+          if (json.message) {
+            errorMessage = Array.isArray(json.message) ? json.message.join('; ') : json.message
+          }
+          if (json.error) {
+            errorMessage += ` (${json.error})`
+          }
+        } catch {
+          // 如果不是 JSON，直接显示文本
+          if (text) errorMessage = text
+        }
+      } catch (e) {
+        console.error('解析错误响应失败:', e)
+      }
+    }
+    
+    alert(errorMessage)
   } finally {
     importing.value = false
   }
