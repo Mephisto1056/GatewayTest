@@ -29,7 +29,7 @@ async function bootstrap() {
 
     // 4. Find all users except admin
     const usersToDelete = await userRepository.createQueryBuilder('user')
-      .where('user.email != :adminEmail', { adminEmail: 'admin@example.com' })
+      .where('user.email != :adminEmail', { adminEmail: 'admin@gateway.com' })
       .getMany();
 
     if (usersToDelete.length > 0) {

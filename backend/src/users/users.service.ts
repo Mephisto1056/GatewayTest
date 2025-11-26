@@ -62,6 +62,12 @@ export class UsersService {
   }
 
   async remove(id: number): Promise<void> {
+    const user = await this.usersRepository.findOneBy({ id });
+    // 仅保护管理员账号和特定邮箱的管理员，不限制其他用户的删除（例如 ID 为 2 的普通用户可以被删除）
+    if (user && (user.role === 'admin' || user.email === 'admin@gateway.com')) {
+        throw new Error('无法删除管理员账号');
+    }
+
     try {
         await this.usersRepository.delete(id);
     } catch (error) {

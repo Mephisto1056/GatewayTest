@@ -20,40 +20,19 @@ async function bootstrap() {
     organization: defaultOrg,
   };
 
-  const regularUser = {
-    name: 'Regular User',
-    email: 'user@example.com',
-    password: 'userpassword',
-    role: 'user',
-    organizationId: defaultOrg.id,
-    organization: defaultOrg,
-  };
-
   // Handle Admin User
   const existingAdmin = await usersService.findOneByEmail(admin.email);
   if (existingAdmin) {
+    // Ensure admin is not deleted/reset, just update if needed
+    // Note: In a real scenario, you might want to skip updating password if not intended
     await usersService.update(existingAdmin.id, admin);
-    console.log('Admin user updated successfully.');
+    console.log('Admin user updated/verified successfully.');
   } else {
     try {
       await usersService.create(admin);
       console.log('Admin user created successfully.');
     } catch (error) {
       console.error('Error creating admin user:', error);
-    }
-  }
-
-  // Handle Regular User
-  const existingRegularUser = await usersService.findOneByEmail(regularUser.email);
-  if (existingRegularUser) {
-    await usersService.update(existingRegularUser.id, regularUser);
-    console.log('Regular user updated successfully.');
-  } else {
-    try {
-      await usersService.create(regularUser);
-      console.log('Regular user created successfully.');
-    } catch (error) {
-      console.error('Error creating regular user:', error);
     }
   }
 
