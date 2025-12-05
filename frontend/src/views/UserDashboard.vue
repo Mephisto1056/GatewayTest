@@ -49,7 +49,7 @@
                 <div class="title-badges">
                   <span v-if="isNew(task.id)" class="badge badge-new">新</span>
                   <span class="badge" :class="getRelationshipClass(task.relationship)">
-                    {{ task.relationship }}
+                    {{ getRelationshipLabel(task.relationship) }}
                   </span>
                 </div>
               </div>
@@ -134,7 +134,7 @@
                 <h3>{{ task.relationship === '提名' ? '提名评价人' : task.evaluation.title }}</h3>
                 <div class="title-badges">
                   <span class="badge badge-completed">已完成</span>
-                  <span class="badge badge-gray">{{ task.relationship }}</span>
+                  <span class="badge badge-gray">{{ getRelationshipLabel(task.relationship) }}</span>
                 </div>
               </div>
             </div>
@@ -257,6 +257,13 @@ export default defineComponent({
       return map[relationship] || 'badge-gray';
     };
 
+    const getRelationshipLabel = (relationship: string) => {
+      if (['上级', '平级', '下级'].includes(relationship)) {
+        return '他评';
+      }
+      return relationship;
+    };
+
     onMounted(() => {
       loadSeenTasks();
       fetchTasks();
@@ -275,6 +282,7 @@ export default defineComponent({
       markAsRead,
       clearNotifications,
       hasPendingNomination,
+      getRelationshipLabel,
     };
   },
 });
