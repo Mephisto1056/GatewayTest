@@ -197,14 +197,6 @@ interface Questionnaire {
   roleSpecific: Question[];
 }
 
-interface EvaluationResult {
-  totalScore: number;
-  maxTotalScore: number;
-  overallPercentage: number;
-  selfdirectedScores: any[];
-  roleSpecificScores: any[];
-}
-
 // 响应式数据
 const route = useRoute();
 const router = useRouter();

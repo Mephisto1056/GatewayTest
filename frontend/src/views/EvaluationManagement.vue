@@ -605,7 +605,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, nextTick } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import MaterialIcon from '../components/icons/MaterialIcon.vue'
 import apiClient from '../services/api'
@@ -1148,7 +1148,7 @@ const createEvaluation = async () => {
       questionnaireType: newEvaluation.value.questionnaireType
     }
 
-    const response = await fetch('/api/evaluations/publish-batch', {
+    await fetch('/api/evaluations/publish-batch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(evaluationData)
