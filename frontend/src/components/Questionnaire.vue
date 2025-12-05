@@ -52,10 +52,7 @@
                     <option value="自评">自评</option>
                   </select>
                 </div>
-                 <div class="form-group" v-else>
-                  <label>被测评人与您的关系</label>
-                  <p class="form-static-text">{{ relationship }}</p>
-                </div>
+                <!-- 如果关系已固定（从链接进入），则不显示关系字段，但在后台保留该值 -->
               </div>
               
               <div class="progress-section">
