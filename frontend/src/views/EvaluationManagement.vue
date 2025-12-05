@@ -294,7 +294,7 @@
 
     <div v-if="showCreateModal" class="modal-overlay" @click="closeCreateModal">
       <div class="modal-content modal-content--medium" @click.stop>
-        <div class="modal-header" style="margin-bottom: 0;">
+        <div class="modal-header">
           <div>
             <h2>创建新评估</h2>
             <p class="modal-subtitle">请选择创建方式</p>
@@ -304,11 +304,10 @@
           </button>
         </div>
 
-        <div class="modal-tabs" style="display: flex; border-bottom: 1px solid #e2e8f0; margin-bottom: 1.5rem;">
+        <div class="modal-tabs">
           <button
             class="tab-btn"
             :class="{ active: activeTab === 'batch' }"
-            style="padding: 1rem; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 500; color: #64748b;"
             @click="activeTab = 'batch'"
           >
             按组织批量创建
@@ -316,7 +315,6 @@
           <button
             class="tab-btn"
             :class="{ active: activeTab === 'manual' }"
-            style="padding: 1rem; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 500; color: #64748b;"
             @click="activeTab = 'manual'"
           >
             手动自定义创建
@@ -324,7 +322,7 @@
         </div>
 
         <!-- Tab 1: 按组织批量创建 -->
-        <div v-if="activeTab === 'batch'" class="tab-content batch-create-tab">
+        <div v-if="activeTab === 'batch'" class="evaluation-form">
           <div class="form-group">
             <label>1. 选择组织</label>
             <select v-model="selectedOrgId" class="form-select">
@@ -335,15 +333,27 @@
             </select>
           </div>
 
-          <div v-if="selectedOrgId && orgRoleSummary" class="card" style="padding: 1rem; margin: 1rem 0; background: #f8fafc; border: 1px dashed #cbd5e1;">
-            <h4 style="margin-top: 0; font-size: 0.9rem; color: #475569;">预计创建内容</h4>
-            <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+          <div v-if="selectedOrgId && orgRoleSummary" class="summary-preview-card">
+            <h4 class="summary-preview-title">预计创建内容</h4>
+            <div class="summary-preview-content">
               将为 <strong>{{ usersInSelectedOrg.length }}</strong> 位用户创建评估：
-              <ul style="margin: 0.5rem 0 0 1.2rem; padding: 0;">
-                <li v-if="orgRoleSummary['高层领导者']">高层领导者: {{ orgRoleSummary['高层领导者'] }} 人 <span style="color: #10b981;">→ 高层领导问卷</span></li>
-                <li v-if="orgRoleSummary['中层管理者']">中层管理者: {{ orgRoleSummary['中层管理者'] }} 人 <span style="color: #3b82f6;">→ 中层管理问卷</span></li>
-                <li v-if="orgRoleSummary['基层管理者']">基层管理者: {{ orgRoleSummary['基层管理者'] }} 人 <span style="color: #f59e0b;">→ 基层管理问卷</span></li>
-                <li v-if="orgRoleSummary['其他']">其他角色: {{ orgRoleSummary['其他'] }} 人 <span style="color: #64748b;">→ 基层管理问卷</span></li>
+              <ul class="summary-preview-list">
+                <li v-if="orgRoleSummary['高层领导者']">
+                  <span>高层领导者: {{ orgRoleSummary['高层领导者'] }} 人</span>
+                  <span class="mapping-tag mapping-tag--high">→ 高层领导问卷</span>
+                </li>
+                <li v-if="orgRoleSummary['中层管理者']">
+                  <span>中层管理者: {{ orgRoleSummary['中层管理者'] }} 人</span>
+                  <span class="mapping-tag mapping-tag--mid">→ 中层管理问卷</span>
+                </li>
+                <li v-if="orgRoleSummary['基层管理者']">
+                  <span>基层管理者: {{ orgRoleSummary['基层管理者'] }} 人</span>
+                  <span class="mapping-tag mapping-tag--low">→ 基层管理问卷</span>
+                </li>
+                <li v-if="orgRoleSummary['其他']">
+                  <span>其他角色: {{ orgRoleSummary['其他'] }} 人</span>
+                  <span class="mapping-tag mapping-tag--other">→ 基层管理问卷</span>
+                </li>
               </ul>
             </div>
           </div>
@@ -379,12 +389,11 @@
              ></textarea>
            </div>
 
-          <div class="form-actions" style="margin-top: 1.5rem;">
+          <div class="form-actions">
             <button type="button" class="btn btn-ghost" @click="closeCreateModal">取消</button>
             <button
               type="button"
-              class="btn btn-primary"
-              style="width: 100%; justify-content: center;"
+              class="btn btn-primary btn-block"
               :disabled="isBatchCreating || !selectedOrgId || usersInSelectedOrg.length === 0 || !newEvaluation.title"
               @click="batchCreateForOrg"
             >
@@ -1881,6 +1890,86 @@ onMounted(() => {
   flex-direction: column;
   gap: var(--space-5);
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.modal-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--gray-200);
+  padding: 0 var(--space-6);
+}
+
+.tab-btn {
+  padding: var(--space-4) var(--space-2);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-weight: var(--font-medium);
+  color: var(--gray-500);
+  margin-right: var(--space-4);
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  color: var(--gray-700);
+}
+
+.tab-btn.active {
+  color: var(--primary-600);
+  border-bottom-color: var(--primary-600);
+}
+
+.summary-preview-card {
+  padding: var(--space-4);
+  background: var(--gray-50);
+  border: 1px dashed var(--gray-300);
+  border-radius: var(--radius-lg);
+}
+
+.summary-preview-title {
+  margin: 0 0 var(--space-2) 0;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--gray-700);
+}
+
+.summary-preview-content {
+  font-size: var(--text-sm);
+  color: var(--gray-600);
+}
+
+.summary-preview-list {
+  margin: var(--space-2) 0 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.summary-preview-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--text-xs);
+  padding-left: var(--space-2);
+  border-left: 2px solid var(--gray-200);
+}
+
+.mapping-tag {
+  font-weight: var(--font-medium);
+}
+
+.mapping-tag--high { color: var(--success-600); }
+.mapping-tag--mid { color: var(--primary-600); }
+.mapping-tag--low { color: var(--warning-600); }
+.mapping-tag--other { color: var(--gray-500); }
+
+.btn-block {
+  flex: 1;
+  justify-content: center;
 }
 
 .form-group {
@@ -2136,9 +2225,3 @@ onMounted(() => {
 }
 </style>
 
-<style scoped>
-.modal-tabs .tab-btn.active {
-  color: #2563eb !important;
-  border-bottom-color: #2563eb !important;
-}
-</style>
