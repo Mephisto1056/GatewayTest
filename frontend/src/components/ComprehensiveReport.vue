@@ -19,7 +19,7 @@
           <p><strong>参与人：</strong>{{ report.userInfo.userName }}</p>
           <p><strong>当前职位：</strong>{{ report.userInfo.userRole }}</p>
           <p><strong>测评日期：</strong>{{ formatDate(report.userInfo.evaluationDate) }}</p>
-          <p><strong>评估机构：</strong>讯百汇组织领导力测评与咨询</p>
+          <p><strong>评估机构：</strong>讯佰汇组织领导力测评与咨询</p>
         </div>
         <div class="action-buttons">
           <button @click="downloadPDF" class="download-btn">
@@ -36,10 +36,10 @@
           <p>本报告是对被测评人的领导力素质的总结，用于帮助被测评人认知并理解自身所具备的优势领域和待发展领域、针对性地制定学习和发展策略。</p>
           
           <h3>阅读者</h3>
-          <p>本报告仅限于被测评人本人、被测评人直接上级、人力资源部以及讯百汇项目顾问使用，用途限于被测评人个体能力的持续发展。任何其它组织或个人未经许可，不得擅自阅读、传播、复制或以其它形式使用本报告中的任何内容。</p>
-          
+          <p>本报告仅限于被测评人本人、被测评人直接上级、人力资源部以及讯佰汇项目顾问使用，用途限于被测评人个体能力的持续发展。任何其它组织或个人未经许可，不得擅自阅读、传播、复制或以其它形式使用本报告中的任何内容。</p>
+
           <h3>报告的有效性</h3>
-          <p>本次测评基于讯百汇组织领导力模型对管理者的领导力要求，对被测评人的行为进行评价。个人的能力素质是不断发展的，特别是在经历重大事件、经受重大挑战之后，素质的提升会很迅速。因此，请留意这份报告的撰写日期和撰写目的。在完成这份报告三年之后，或该参与者或其工作环境发生了巨大变化，如果仍需用该报告作参考，必须慎重考虑其有效性。</p>
+          <p>本次测评基于讯佰汇组织领导力模型对管理者的领导力要求，对被测评人的行为进行评价。个人的能力素质是不断发展的，特别是在经历重大事件、经受重大挑战之后，素质的提升会很迅速。因此，请留意这份报告的撰写日期和撰写目的。在完成这份报告三年之后，或该参与者或其工作环境发生了巨大变化，如果仍需用该报告作参考，必须慎重考虑其有效性。</p>
           
           <h3>报告的使用注意</h3>
           <p>当阅读本报告时，应首先将注意力集中在优势领域，思考被测评人未来如何更好的发挥优势领域。如果被测评人的行为与其他反馈信息不一致，请不要否定这些结论，尝试寻找更多的信息进行客观的评价。对于待发展领域，建议参与者在阅读报告后，询问直接上级、内部教练或其他信任的人获取更加具体的发展建议。</p>
@@ -49,7 +49,7 @@
       <!-- 第二部分：模型与维度定义 -->
       <div class="report-section indicators-section">
         <h2 class="section-title">组织领导力模型与维度定义</h2>
-        <p class="section-intro">本次领导力测评是基于讯百汇组织领导力模型的{{ getLeadershipItemsCount() }}项领导力素质。</p>
+        <p class="section-intro">本次领导力测评是基于讯佰汇组织领导力模型的{{ getLeadershipItemsCount() }}项领导力素质。</p>
         <div class="indicators-content">
           <div v-for="(indicator, index) in report.indicatorMeanings" :key="index" class="indicator-item">
             <h3>{{ indicator.dimension }}</h3>
@@ -68,7 +68,7 @@
       <!-- 第三部分：组织领导力剖像 (雷达图) -->
       <div class="report-section radar-section">
         <h2 class="section-title">参与者的组织领导力剖像</h2>
-        <p class="section-intro">对照讯百汇组织领导力模型对{{ getRoleTextForProfile() }}的领导力要求，参与者在各个能力维度的得分如下。</p>
+        <p class="section-intro">对照讯佰汇组织领导力模型对{{ getRoleTextForProfile() }}的领导力要求，参与者在各个能力维度的得分如下。</p>
         
         <div class="radar-container">
           <div class="radar-chart-wrapper full-width">
