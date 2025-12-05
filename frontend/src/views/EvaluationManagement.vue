@@ -525,6 +525,11 @@
             <p class="link-hint">链接在评估结束前长期有效，支持多人同时填写。</p>
           </div>
 
+          <div v-if="qrCodeUrl" class="qrcode-block" style="text-align: center; margin: 1.5rem 0; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+            <label style="display: block; margin-bottom: 10px; color: #475569; font-weight: 500;">扫码直接参与</label>
+            <img :src="qrCodeUrl" alt="评估二维码" style="width: 160px; height: 160px; border: 1px solid #e2e8f0; border-radius: 4px;">
+          </div>
+
           <div class="share-guide card">
             <h4>使用说明</h4>
             <ul>
@@ -548,10 +553,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import MaterialIcon from '../components/icons/MaterialIcon.vue'
 import apiClient from '../services/api'
+import QRCode from 'qrcode'
 
 const router = useRouter()
 
@@ -625,6 +631,7 @@ const showShareModal = ref(false)
 const showDetailsModal = ref(false)
 const linkCopied = ref(false)
 const currentEvaluation = ref<Evaluation | null>(null)
+const qrCodeUrl = ref('')
 
 const newEvaluation = ref({
   title: '',
@@ -1039,6 +1046,23 @@ const shareEvaluation = (evaluation: Evaluation) => {
   currentEvaluation.value = evaluation
   showShareModal.value = true
   linkCopied.value = false
+  generateQRCode()
+}
+
+const generateQRCode = async () => {
+  if (!evaluationLink.value) return
+  try {
+    qrCodeUrl.value = await QRCode.toDataURL(evaluationLink.value, {
+      width: 200,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#ffffff'
+      }
+    })
+  } catch (err) {
+    console.error('QR Code generation failed:', err)
+  }
 }
 
 const generateReport = async (evaluation: Evaluation) => {
@@ -1155,7 +1179,32 @@ const closeShareModal = () => {
 const copyLink = async () => {
   if (!evaluationLink.value) return
   try {
-    await navigator.clipboard.writeText(evaluationLink.value)
+    // 优先尝试使用 Clipboard API
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(evaluationLink.value)
+    } else {
+      // 降级方案：使用 textarea 和 execCommand
+      const textArea = document.createElement('textarea')
+      textArea.value = evaluationLink.value
+      // 避免页面滚动
+      textArea.style.position = 'fixed'
+      textArea.style.left = '0'
+      textArea.style.top = '0'
+      textArea.style.opacity = '0'
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      
+      try {
+        const successful = document.execCommand('copy')
+        if (!successful) {
+          throw new Error('Fallback copy failed')
+        }
+      } finally {
+        document.body.removeChild(textArea)
+      }
+    }
+    
     linkCopied.value = true
     setTimeout(() => {
       linkCopied.value = false

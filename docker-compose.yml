@@ -49,7 +49,7 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-}
-      FRONTEND_URL: ${FRONTEND_URL:-http://101.132.237.40}
+      FRONTEND_URL: ${FRONTEND_URL:-http://106.15.178.95}
       QUESTION_LIST_PATH: /app/questionlist
     volumes:
       - ./backend/output:/app/output # 挂载生成的报告目录
