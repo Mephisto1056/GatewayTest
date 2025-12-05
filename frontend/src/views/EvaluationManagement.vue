@@ -294,17 +294,108 @@
 
     <div v-if="showCreateModal" class="modal-overlay" @click="closeCreateModal">
       <div class="modal-content modal-content--medium" @click.stop>
-        <div class="modal-header">
+        <div class="modal-header" style="margin-bottom: 0;">
           <div>
             <h2>创建新评估</h2>
-            <p class="modal-subtitle">完善基础信息后即可发布给相关用户</p>
+            <p class="modal-subtitle">请选择创建方式</p>
           </div>
           <button type="button" class="modal-close" @click="closeCreateModal">
             <MaterialIcon name="close" size="sm" />
           </button>
         </div>
 
-        <form class="evaluation-form" @submit.prevent="createEvaluation">
+        <div class="modal-tabs" style="display: flex; border-bottom: 1px solid #e2e8f0; margin-bottom: 1.5rem;">
+          <button
+            class="tab-btn"
+            :class="{ active: activeTab === 'batch' }"
+            style="padding: 1rem; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 500; color: #64748b;"
+            @click="activeTab = 'batch'"
+          >
+            按组织批量创建
+          </button>
+          <button
+            class="tab-btn"
+            :class="{ active: activeTab === 'manual' }"
+            style="padding: 1rem; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 500; color: #64748b;"
+            @click="activeTab = 'manual'"
+          >
+            手动自定义创建
+          </button>
+        </div>
+
+        <!-- Tab 1: 按组织批量创建 -->
+        <div v-if="activeTab === 'batch'" class="tab-content batch-create-tab">
+          <div class="form-group">
+            <label>1. 选择组织</label>
+            <select v-model="selectedOrgId" class="form-select">
+              <option value="">请选择公司/组织</option>
+              <option v-for="org in organizations" :key="org.id" :value="org.id">
+                {{ org.name }}
+              </option>
+            </select>
+          </div>
+
+          <div v-if="selectedOrgId && orgRoleSummary" class="card" style="padding: 1rem; margin: 1rem 0; background: #f8fafc; border: 1px dashed #cbd5e1;">
+            <h4 style="margin-top: 0; font-size: 0.9rem; color: #475569;">预计创建内容</h4>
+            <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+              将为 <strong>{{ usersInSelectedOrg.length }}</strong> 位用户创建评估：
+              <ul style="margin: 0.5rem 0 0 1.2rem; padding: 0;">
+                <li v-if="orgRoleSummary['高层领导者']">高层领导者: {{ orgRoleSummary['高层领导者'] }} 人 <span style="color: #10b981;">→ 高层领导问卷</span></li>
+                <li v-if="orgRoleSummary['中层管理者']">中层管理者: {{ orgRoleSummary['中层管理者'] }} 人 <span style="color: #3b82f6;">→ 中层管理问卷</span></li>
+                <li v-if="orgRoleSummary['基层管理者']">基层管理者: {{ orgRoleSummary['基层管理者'] }} 人 <span style="color: #f59e0b;">→ 基层管理问卷</span></li>
+                <li v-if="orgRoleSummary['其他']">其他角色: {{ orgRoleSummary['其他'] }} 人 <span style="color: #64748b;">→ 基层管理问卷</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>2. 评估标题</label>
+            <input
+              v-model="newEvaluation.title"
+              class="form-input"
+              required
+              placeholder="例如：2025年度第一季度领导力评估"
+            >
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>开始日期</label>
+              <input v-model="newEvaluation.startDate" type="date" class="form-input">
+            </div>
+            <div class="form-group">
+              <label>截止日期</label>
+              <input v-model="newEvaluation.endDate" type="date" class="form-input">
+            </div>
+          </div>
+
+          <div class="form-group">
+             <label>评估描述 (可选)</label>
+             <textarea
+               v-model="newEvaluation.description"
+               class="form-textarea"
+               rows="2"
+               placeholder="请输入评估描述"
+             ></textarea>
+           </div>
+
+          <div class="form-actions" style="margin-top: 1.5rem;">
+            <button type="button" class="btn btn-ghost" @click="closeCreateModal">取消</button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              style="width: 100%; justify-content: center;"
+              :disabled="isBatchCreating || !selectedOrgId || usersInSelectedOrg.length === 0 || !newEvaluation.title"
+              @click="batchCreateForOrg"
+            >
+              <MaterialIcon name="plus" size="sm" />
+              {{ isBatchCreating ? '正在批量创建...' : `立即为 ${usersInSelectedOrg.length || 0} 人一键创建评估` }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 2: 手动自定义创建 -->
+        <form v-else class="evaluation-form" @submit.prevent="createEvaluation">
           <div class="form-group">
             <label>评估标题</label>
             <input
@@ -313,45 +404,6 @@
               required
               placeholder="请输入评估标题"
             >
-          </div>
-
-          <!-- 组织一键创建区域 -->
-          <div class="org-batch-create card" style="padding: 1rem; margin-bottom: 1rem; background: #f8fafc; border: 1px dashed #cbd5e1;">
-            <h4 style="margin-top: 0; margin-bottom: 1rem; font-size: 0.9rem; color: #475569;">按组织一键批量创建</h4>
-            <div class="form-group">
-              <label>选择组织</label>
-              <div style="display: flex; gap: 10px;">
-                <select v-model="selectedOrgId" class="form-select">
-                  <option value="">请选择公司/组织</option>
-                  <option v-for="org in organizations" :key="org.id" :value="org.id">
-                    {{ org.name }}
-                  </option>
-                </select>
-                <button 
-                  v-if="selectedOrgId" 
-                  type="button" 
-                  class="btn btn-primary" 
-                  :disabled="isBatchCreating || usersInSelectedOrg.length === 0"
-                  @click="batchCreateForOrg"
-                >
-                  {{ isBatchCreating ? '创建中...' : '一键创建' }}
-                </button>
-              </div>
-            </div>
-            
-            <div v-if="selectedOrgId && orgRoleSummary" style="margin-top: 0.5rem; font-size: 0.8rem; color: #64748b;">
-              将为 {{ usersInSelectedOrg.length }} 位用户创建评估：
-              <ul style="margin: 0.5rem 0 0 1.2rem; padding: 0;">
-                <li v-if="orgRoleSummary['高层领导者']">高层领导者: {{ orgRoleSummary['高层领导者'] }} 人 (分配: 高层领导问卷)</li>
-                <li v-if="orgRoleSummary['中层管理者']">中层管理者: {{ orgRoleSummary['中层管理者'] }} 人 (分配: 中层管理问卷)</li>
-                <li v-if="orgRoleSummary['基层管理者']">基层管理者: {{ orgRoleSummary['基层管理者'] }} 人 (分配: 基层管理问卷)</li>
-                <li v-if="orgRoleSummary['其他']">其他角色: {{ orgRoleSummary['其他'] }} 人 (分配: 基层管理问卷)</li>
-              </ul>
-            </div>
-          </div>
-
-          <div class="form-separator" style="text-align: center; margin: 1rem 0; position: relative;">
-            <span style="background: white; padding: 0 10px; color: #94a3b8; font-size: 0.8rem;">或 手动选择</span>
           </div>
 
           <div class="form-group">
@@ -365,7 +417,7 @@
                   v-model="newEvaluation.userIds"
                 />
                 <label :for="`user-${user.id}`">
-                  {{ user.name }} 
+                  {{ user.name }}
                   <span v-if="user.organization" style="color: #64748b; font-size: 0.8em;">[{{ user.organization.name }}]</span>
                   ({{ user.role }})
                 </label>
@@ -625,6 +677,7 @@ const showCreateModal = ref(false)
 const showBatchDeleteModal = ref(false)
 const selectedOrgId = ref<number | ''>('')
 const selectedDeleteOrgId = ref<number | ''>('')
+const activeTab = ref('batch')
 const isBatchCreating = ref(false)
 const isDeleting = ref(false)
 const showShareModal = ref(false)
@@ -977,43 +1030,37 @@ const batchCreateForOrg = async () => {
   try {
     const promises = [];
     const orgName = usersInSelectedOrg.value[0]?.organization?.name || '该组织';
+    // 使用用户在表单中选择的日期，如果未选择则使用默认值
+    const startDate = newEvaluation.value.startDate
+      ? new Date(newEvaluation.value.startDate).toISOString()
+      : new Date().toISOString();
+      
+    const endDate = newEvaluation.value.endDate
+      ? new Date(newEvaluation.value.endDate).toISOString()
+      : new Date(Date.now() + 30 * DAY_IN_MS).toISOString();
+
     const commonData = {
       title: newEvaluation.value.title,
       description: newEvaluation.value.description || `针对 ${orgName} 的${newEvaluation.value.title}`,
-      startDate: newEvaluation.value.startDate || new Date().toISOString(),
-      endDate: newEvaluation.value.endDate || new Date(Date.now() + 30 * DAY_IN_MS).toISOString(),
+      startDate: startDate,
+      endDate: endDate,
       status: 'active'
     };
 
     // Send batch requests
     if (groups['高层领导者'].length) {
-      promises.push(fetch('/api/evaluations/publish-batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...commonData, userIds: groups['高层领导者'], questionnaireType: '高层领导' })
-      }));
+      // 使用 apiClient 而不是原生 fetch
+      promises.push(apiClient.post('/evaluations/publish-batch', { ...commonData, userIds: groups['高层领导者'], questionnaireType: '高层领导' }));
     }
     if (groups['中层管理者'].length) {
-      promises.push(fetch('/api/evaluations/publish-batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...commonData, userIds: groups['中层管理者'], questionnaireType: '中层管理' })
-      }));
+      promises.push(apiClient.post('/evaluations/publish-batch', { ...commonData, userIds: groups['中层管理者'], questionnaireType: '中层管理' }));
     }
     if (groups['基层管理者'].length) {
-      promises.push(fetch('/api/evaluations/publish-batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...commonData, userIds: groups['基层管理者'], questionnaireType: '基层管理' })
-      }));
+      promises.push(apiClient.post('/evaluations/publish-batch', { ...commonData, userIds: groups['基层管理者'], questionnaireType: '基层管理' }));
     }
     if (groups['其他'].length) {
       // Default to Low level for others
-      promises.push(fetch('/api/evaluations/publish-batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...commonData, userIds: groups['其他'], questionnaireType: '基层管理' })
-      }));
+      promises.push(apiClient.post('/evaluations/publish-batch', { ...commonData, userIds: groups['其他'], questionnaireType: '基层管理' }));
     }
 
     await Promise.all(promises);
@@ -1107,14 +1154,10 @@ const createEvaluation = async () => {
       body: JSON.stringify(evaluationData)
     })
 
-    if (response.ok) {
-      await response.json()
-      alert('评估创建成功！')
-      closeCreateModal()
-      loadEvaluations()
-    } else {
-      throw new Error('创建失败')
-    }
+    // axios 响应通常直接在 data 中
+    alert('评估创建成功！')
+    closeCreateModal()
+    loadEvaluations()
   } catch (error) {
     console.error('创建评估失败:', error)
     alert('创建评估失败，请稍后重试')
@@ -1123,6 +1166,7 @@ const createEvaluation = async () => {
 
 const closeCreateModal = () => {
   showCreateModal.value = false
+  // 重置表单数据
   newEvaluation.value = {
     title: '',
     userIds: [],
@@ -1131,6 +1175,10 @@ const closeCreateModal = () => {
     endDate: '',
     questionnaireType: ''
   }
+  // 重置 Tab 和选中状态
+  activeTab.value = 'batch'
+  selectedOrgId.value = ''
+  isBatchCreating.value = false
 }
 
 const closeBatchDeleteModal = () => {
@@ -2085,5 +2133,12 @@ onMounted(() => {
     flex-direction: column;
     align-items: stretch;
   }
+}
+</style>
+
+<style scoped>
+.modal-tabs .tab-btn.active {
+  color: #2563eb !important;
+  border-bottom-color: #2563eb !important;
 }
 </style>
