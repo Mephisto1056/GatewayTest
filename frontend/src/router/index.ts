@@ -102,6 +102,12 @@ const routes = [
     component: () => import('../views/NominateEvaluators.vue'),
     meta: { requiresAuth: true, roles: ['user', '高层领导者', '中层管理者', '基层管理者'] },
   },
+  {
+    path: '/submit-success',
+    name: 'SubmitSuccess',
+    component: () => import('../views/SubmitSuccess.vue'),
+    meta: { requiresAuth: true, roles: ['user', '高层领导者', '中层管理者', '基层管理者'] },
+  },
 ];
 
 const router = createRouter({

@@ -169,31 +169,6 @@
           </div>
         </div>
 
-        <!-- 提交成功页面 -->
-        <div v-if="submitted" class="success-page">
-          <div class="success-content">
-            <div class="success-icon">
-              <MaterialIcon name="check" size="xl" />
-            </div>
-            <h2>提交成功！</h2>
-            <p>感谢您完成此次评估。</p>
-            <div v-if="evaluationResult" class="result-preview">
-              <h3>本次问卷评估结果</h3>
-              <p class="result-note">注：此得分为当前问卷的计算结果（已包含反向计分与相关性修正），最终360度评估报告将综合多方评价。</p>
-              <div class="score-summary">
-                <div class="score-item">
-                  <span class="score-label">总分</span>
-                  <span class="score-value">{{ evaluationResult.totalScore.toFixed(1) }} / {{ evaluationResult.maxTotalScore }}</span>
-                </div>
-                <div class="score-item">
-                  <span class="score-label">总体得分率</span>
-                  <span class="score-value">{{ evaluationResult.overallPercentage.toFixed(1) }}%</span>
-                </div>
-              </div>
-            </div>
-            <button @click="router.push('/user-dashboard')" class="btn btn-primary">返回任务列表</button>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -243,8 +218,6 @@ const relationship = ref<string>('');
 const loading = ref(true);
 const error = ref<string | null>(null);
 const isSubmitting = ref(false);
-const submitted = ref(false);
-const evaluationResult = ref<EvaluationResult | null>(null);
 
 // 从路由参数获取
 const evaluationId = computed(() => parseInt(route.query.evaluationId as string) || 1);
@@ -442,8 +415,8 @@ const submitQuestionnaire = async () => {
     const result = response.data;
     
     if (result.success) {
-      evaluationResult.value = result.evaluationResult;
-      submitted.value = true;
+      // 提交成功，跳转到统一成功页面
+      router.push('/submit-success');
     } else {
       throw new Error(result.message || '提交失败');
     }
