@@ -118,13 +118,17 @@
                   <p class="question-text">{{ question.questionText }}</p>
                   
                   <!-- 判断是否为开放式问题 -->
-                  <div v-if="isOpenEndedQuestion(question)" class="open-question">
+                  <!-- 如果是自评，则不显示开放式问题 -->
+                  <div v-if="isOpenEndedQuestion(question) && relationship !== '自评'" class="open-question">
                     <textarea
                       v-model="responses[question.questionCode]"
                       placeholder="请详细描述您的观察和建议..."
                       @input="updateProgress"
                       class="form-textarea"
                     ></textarea>
+                  </div>
+                  <div v-else-if="isOpenEndedQuestion(question) && relationship === '自评'" class="open-question-hidden" style="color: #64748b; font-style: italic; padding: 10px; background: #f8fafc; border-radius: 6px;">
+                    <span>(自评环节无需填写此开放式问题)</span>
                   </div>
                   
                   <!-- 评分选项 -->
@@ -256,10 +260,19 @@ const totalQuestions = computed(() => {
 });
 
 const completedQuestions = computed(() => {
-  return Object.keys(responses.value).filter(key => {
+  // 计算已回答的题目数量，如果自评则自动加上开放式问题数量（因为不需要填）
+  let count = Object.keys(responses.value).filter(key => {
     const value = responses.value[key];
     return value !== undefined && value !== null && value !== '';
   }).length;
+
+  if (relationship.value === '自评' && questionnaire.value) {
+    // 加上开放式问题的数量
+    const openQuestions = questionnaire.value.roleSpecific.filter(q => isOpenEndedQuestion(q));
+    count += openQuestions.length;
+  }
+
+  return count;
 });
 
 const progressPercentage = computed(() => {
@@ -288,6 +301,10 @@ const isFormValid = computed(() => {
   if (questionnaire.value) {
     const allQuestions = [...questionnaire.value.selfdirected, ...questionnaire.value.roleSpecific];
     return allQuestions.every(question => {
+      // 如果是自评且为开放式问题，则跳过验证
+      if (relationship.value === '自评' && isOpenEndedQuestion(question)) {
+        return true;
+      }
       const response = responses.value[question.questionCode];
       return response !== undefined && response !== null && response !== '';
     });
@@ -343,6 +360,10 @@ const getValidationMessage = (): string => {
   if (questionnaire.value) {
     const allQuestions = [...questionnaire.value.selfdirected, ...questionnaire.value.roleSpecific];
     unansweredCount = allQuestions.filter(question => {
+      // 如果是自评且为开放式问题，则视为已回答（不需要回答）
+      if (relationship.value === '自评' && isOpenEndedQuestion(question)) {
+        return false;
+      }
       const response = responses.value[question.questionCode];
       return !response || response === '';
     }).length;
