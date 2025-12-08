@@ -258,6 +258,21 @@ export class EvaluationsService {
         { status: 'completed' as any }
       );
 
+      // 检查是否所有参与者都已完成，如果是则更新评估状态
+      const allParticipants = await this.participantsRepository.find({
+        where: { evaluationId: submission.evaluationId }
+      });
+      
+      // 过滤掉'提名'类型的参与者（因为提名任务通常是前置任务，且不包含在问卷统计中）
+      // 我们只关心真正需要填写问卷的参与者
+      const activeParticipants = allParticipants.filter(p => p.relationship !== '提名');
+      
+      const allCompleted = activeParticipants.every(p => p.status === 'completed');
+      
+      if (allCompleted && activeParticipants.length > 0) {
+        await this.evaluationsRepository.update(submission.evaluationId, { status: 'completed' });
+      }
+
       // 计算得分（仅对评分题）
       const scoreResponses = new Map<string, number>();
       submission.responses.forEach(response => {
